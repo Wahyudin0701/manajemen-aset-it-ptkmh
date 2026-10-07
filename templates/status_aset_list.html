@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Status Aset - ITAM{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold tracking-wider text-kerinci uppercase mb-1">Status Aset</p>
+        <h2 class="text-2xl font-bold text-gray-900">Manajemen Status Aset</h2>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="flex space-x-2 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
+    <a href="?tab=tersedia" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'tersedia' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Tersedia
+        <span class="ml-2 {% if tab == 'tersedia' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.tersedia }}</span>
+    </a>
+    <a href="?tab=digunakan" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'digunakan' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Digunakan
+        <span class="ml-2 {% if tab == 'digunakan' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.digunakan }}</span>
+    </a>
+    <a href="?tab=rusak" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'rusak' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Maintenance
+        <span class="ml-2 {% if tab == 'rusak' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.rusak }}</span>
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="mb-4">
+    <form id="searchForm" method="GET" class="relative w-full sm:w-96">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari kode unit, nama aset, atau nama karyawan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
+                    <th class="p-4 font-bold text-center w-16">No</th>
+                    <th class="p-4 font-bold">Kode Unit</th>
+                    <th class="p-4 font-bold">Nama Aset</th>
+                    <th class="p-4 font-bold text-center">Status</th>
+                    {% if tab != 'tersedia' %}
+                    <th class="p-4 font-bold">Dipegang Oleh</th>
+                    {% endif %}
+                    <th class="p-4 font-bold text-center">Riwayat Unit</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-gray-50">
+                {% for unit in units %}
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="p-4 text-gray-500 font-medium text-center">{{ forloop.counter }}</td>
+                    <td class="p-4 font-bold text-gray-900">{{ unit.unit_code }}</td>
+                    <td class="p-4">
+                        <a href="{% url 'asset_units' unit.asset.id %}" class="block group">
+                            <p class="font-medium text-gray-800 group-hover:text-kerinci transition-colors">{{ unit.asset.name }}</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">{{ unit.asset.category.name }}</p>
+                        </a>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}true{% endif %}')" class="hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-kerinci focus:ring-offset-1 rounded-md" title="Klik untuk ubah status">
+                            {% if unit.status == 'tersedia' %}
+                                <span class="bg-emerald-50 border border-emerald-100 text-emerald-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Tersedia</span>
+                            {% elif unit.status == 'digunakan' %}
+                                <span class="bg-blue-50 border border-blue-100 text-blue-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Digunakan</span>
+                            {% elif unit.status == 'rusak' %}
+                                <span class="bg-red-50 border border-red-100 text-red-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Maintenance</span>
+                            {% else %}
+                                <span class="bg-gray-50 border border-gray-200 text-gray-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">{{ unit.get_status_display }}</span>
+                            {% endif %}
+                        </button>
+                    </td>
+                    {% if tab != 'tersedia' %}
+                    <td class="p-4">
+                        {% if unit.assigned_to %}
+                            <p class="font-bold text-gray-800">{{ unit.assigned_to.name }}</p>
+                            <p class="text-xs text-gray-400">NIK: {{ unit.assigned_to.nik }}</p>
+                        {% else %}
+                            <span class="text-gray-300 text-xs italic">-</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    <td class="p-4 text-center">
+                        <a href="{% url 'unit_history' unit.id %}" class="inline-flex items-center justify-center p-2 text-kerinci hover:bg-kerinci-light rounded-xl transition-colors" title="Riwayat Unit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if tab == 'tersedia' %}5{% else %}6{% endif %}" class="p-8 text-center text-gray-400 text-sm">
+                        <div class="flex flex-col items-center justify-center space-y-3">
+                            <svg class="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <p>Belum ada data unit {% if tab == 'rusak' %}maintenance{% else %}{{ tab }}{% endif %} saat ini.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="statusUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeStatusUnitModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Update Status Unit</h3>
+        <p class="text-sm text-gray-500 mb-4">Kode Unit: <strong id="su_code" class="text-gray-900"></strong></p>
+        <form id="statusUnitForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Status Baru</label>
+                <select id="su_status" name="status" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50">
+                    <option value="tersedia" id="opt_su_tersedia">Tersedia</option>
+                    <option value="digunakan" id="opt_su_digunakan" class="hidden" disabled>Digunakan</option>
+                    <option value="rusak">Diperbaiki (Rusak / Maintenance)</option>
+                </select>
+                <p id="su_bast_warning" class="text-xs text-amber-600 mt-1 hidden font-bold">* Aset sedang digunakan. Pengembalian atau Mutasi harus melalui menu Distribusi Aset.</p>
+            </div>
+            
+            <div id="su_notes_container" class="hidden">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Catatan Kejadian <span class="text-red-500">*</span></label>
+                <textarea id="su_notes" name="notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50" placeholder="Jelaskan alasan perbaikan / keluhan kerusakan..."></textarea>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeStatusUnitModal()" class="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-kerinci text-white font-bold rounded-lg text-sm shadow-sm hover:bg-kerinci/90 transition-colors">
+                    Simpan Status
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // JS for status modal
+    function openStatusModal(id, fullCode, status, assignedTo) {
+        document.getElementById('statusUnitForm').action = '/unit/' + id + '/status/';
+        document.getElementById('su_code').innerText = fullCode;
+        
+        const statSelect = document.getElementById('su_status');
+        const optTersedia = document.getElementById('opt_su_tersedia');
+        const optDigunakan = document.getElementById('opt_su_digunakan');
+        const warnText = document.getElementById('su_bast_warning');
+        
+        if (assignedTo && assignedTo !== 'None' && assignedTo !== '') {
+            optDigunakan.disabled = false;
+            optDigunakan.classList.remove('hidden');
+            optTersedia.disabled = true;
+            optTersedia.classList.add('hidden');
+            warnText.classList.remove('hidden');
+            statSelect.value = status;
+        } else {
+            optDigunakan.disabled = true;
+            optDigunakan.classList.add('hidden');
+            optTersedia.disabled = false;
+            optTersedia.classList.remove('hidden');
+            warnText.classList.add('hidden');
+            statSelect.value = status;
+        }
+        
+        function toggleNotes() {
+            const notesContainer = document.getElementById('su_notes_container');
+            const notesInput = document.getElementById('su_notes');
+            if (statSelect.value === 'rusak') {
+                notesContainer.classList.remove('hidden');
+                notesInput.required = true;
+            } else {
+                notesContainer.classList.add('hidden');
+                notesInput.required = false;
+                notesInput.value = '';
+            }
+        }
+        
+        statSelect.onchange = toggleNotes;
+        toggleNotes(); // Run once on open
+
+        document.getElementById('statusUnitModal').classList.remove('hidden');
+    }
+
+    function closeStatusUnitModal() {
+        document.getElementById('statusUnitModal').classList.add('hidden');
+    }
+
+    // AJAX Search
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        const val = searchInput.value;
+        if (val) {
+            searchInput.focus();
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', searchInput.value);
+                
+                const tableContainer = document.getElementById('tableContainer');
+                tableContainer.style.opacity = '0.5';
+                tableContainer.style.transition = 'opacity 0.2s';
+
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newTableContainer = doc.getElementById('tableContainer');
+                        
+                        if (newTableContainer) {
+                            tableContainer.innerHTML = newTableContainer.innerHTML;
+                        }
+                        
+                        tableContainer.style.opacity = '1';
+                        window.history.pushState({}, '', url);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching search results:', error);
+                        tableContainer.style.opacity = '1';
+                    });
+            }, 300);
+        });
+        
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+    }
+</script>
+{% endblock %}

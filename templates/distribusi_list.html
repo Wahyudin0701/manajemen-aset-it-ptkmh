@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Distribusi Aset{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset</p>
+        <h2 class="text-3xl font-extrabold text-gray-900">Distribusi Aset</h2>
+    </div>
+    <button onclick="openCreateModal()" class="bg-kerinci text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center space-x-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span>Buat Baru</span>
+    </button>
+</div>
+
+<!-- Tabs -->
+<div class="flex space-x-2 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
+    <a href="?tab=handover" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'handover' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Serah Terima
+        {% if counts.handover > 0 %}<span class="ml-2 {% if tab == 'handover' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.handover }}</span>{% endif %}
+    </a>
+    <a href="?tab=mutation" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'mutation' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Mutasi
+        {% if counts.mutation > 0 %}<span class="ml-2 {% if tab == 'mutation' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.mutation }}</span>{% endif %}
+    </a>
+    <a href="?tab=return" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if tab == 'return' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Pengembalian
+        {% if counts.return > 0 %}<span class="ml-2 {% if tab == 'return' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.return }}</span>{% endif %}
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="mb-4">
+    <form id="searchForm" method="GET" class="relative w-full sm:w-96">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari kode unit, nama aset, atau nama karyawan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest border-b border-[#002060]">
+                    <th class="p-4 font-bold w-12 text-center">No</th>
+                    <th class="p-4 font-bold">Tanggal</th>
+                    <th class="p-4 font-bold">Unit Aset</th>
+                    {% if tab == 'handover' %}
+                        <th class="p-4 font-bold">Diserahkan Kepada</th>
+                    {% elif tab == 'mutation' %}
+                        <th class="p-4 font-bold">Dari</th>
+                        <th class="p-4 font-bold">Ke</th>
+                    {% elif tab == 'return' %}
+                        <th class="p-4 font-bold">Dikembalikan Oleh</th>
+                    {% endif %}
+                    <th class="p-4 font-bold text-center">Dokumen</th>
+                    <th class="p-4 font-bold">Catatan</th>
+                    <th class="p-4 font-bold text-center w-32">Riwayat Unit</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-gray-50">
+                {% for log in assignments %}
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="p-4 text-gray-500 font-medium text-center">{{ forloop.counter }}</td>
+                    <td class="p-4 font-medium text-gray-900">{{ log.assigned_date|date:"d M Y" }}</td>
+                    <td class="p-4">
+                        <a href="{% url 'asset_units' log.unit.asset.id %}" class="block group">
+                            <p class="font-medium text-gray-800 group-hover:text-kerinci transition-colors">{{ log.unit.asset.name }}</p>
+                            <p class="text-xs text-kerinci mt-0.5 font-bold group-hover:underline">{{ log.unit.unit_code }}</p>
+                        </a>
+                    </td>
+                    {% if tab == 'handover' %}
+                        <td class="p-4">
+                            <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
+                            <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
+                        </td>
+                    {% elif tab == 'mutation' %}
+                        <td class="p-4">
+                            {% if log.from_employee %}
+                                <p class="font-bold text-gray-800">{{ log.from_employee.name }}</p>
+                                <p class="text-xs text-gray-400">NIK: {{ log.from_employee.nik }}</p>
+                            {% else %}
+                                <span class="text-gray-300 italic text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4">
+                            <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
+                            <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
+                        </td>
+                    {% elif tab == 'return' %}
+                        <td class="p-4">
+                            {% if log.from_employee %}
+                                <p class="font-bold text-gray-800">{{ log.from_employee.name }}</p>
+                                <p class="text-xs text-gray-400">NIK: {{ log.from_employee.nik }}</p>
+                            {% else %}
+                                <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
+                                <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                    <td class="p-4 text-center">
+                        {% if log.document %}
+                            <div class="inline-flex items-center justify-center space-x-1">
+                                <a href="{{ log.document.url }}" target="_blank" class="inline-flex items-center space-x-1 text-kerinci hover:underline font-bold text-xs bg-kerinci-light px-3 py-1.5 rounded-lg" title="Lihat Dokumen Fisik">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>File</span>
+                                </a>
+                                <form action="{% url 'distribusi_upload_doc' log.id %}" method="POST" enctype="multipart/form-data" class="inline-block relative">
+                                    {% csrf_token %}
+                                    <label class="cursor-pointer inline-flex items-center justify-center p-1.5 text-gray-400 hover:text-kerinci hover:bg-kerinci/10 rounded-lg transition-colors" title="Perbarui / Ganti Dokumen">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        <input type="file" name="document" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
+                                    </label>
+                                </form>
+                            </div>
+                        {% else %}
+                            <form action="{% url 'distribusi_upload_doc' log.id %}" method="POST" enctype="multipart/form-data" class="inline-block relative">
+                                {% csrf_token %}
+                                <label class="cursor-pointer inline-flex items-center justify-center p-1.5 text-gray-400 hover:text-kerinci hover:bg-kerinci/10 rounded-lg transition-colors border border-dashed border-gray-300 hover:border-kerinci" title="Upload Dokumen">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <input type="file" name="document" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
+                                </label>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-gray-500 text-xs max-w-xs truncate">{{ log.notes|default:"-" }}</td>
+                    <td class="p-4 text-center">
+                        <a href="{% url 'unit_history' log.unit.id %}" class="inline-flex items-center justify-center p-2 text-kerinci hover:bg-kerinci-light rounded-xl transition-colors" title="Riwayat Unit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="p-8 text-center text-gray-400 text-sm">
+                        <div class="flex flex-col items-center justify-center space-y-3">
+                            <svg class="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <p>Belum ada data 
+                            {% if tab == 'handover' %}serah terima{% elif tab == 'mutation' %}mutasi{% else %}pengembalian{% endif %}
+                            aset.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Buat Baru -->
+<div id="createModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="createOverlay" onclick="closeCreateModal()"></div>
+    
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="createCard">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-extrabold text-gray-900" id="modalTitle">Serah Terima Aset</h3>
+            <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form id="createForm" method="POST" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Tipe Distribusi -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Tipe Distribusi <span class="text-red-500">*</span></label>
+                <select id="dist_type" onchange="onTypeChange()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white font-bold">
+                    <option value="handover" {% if tab == 'handover' %}selected{% endif %}>Serah Terima (Gudang → Karyawan)</option>
+                    <option value="mutation" {% if tab == 'mutation' %}selected{% endif %}>Mutasi (Karyawan → Karyawan Lain)</option>
+                    <option value="return" {% if tab == 'return' %}selected{% endif %}>Pengembalian (Karyawan → Gudang)</option>
+                </select>
+            </div>
+            
+            <!-- Unit - Handover (Tersedia) -->
+            <div id="unitHandoverGroup">
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Pilih Unit Aset <span class="text-red-500">*</span></label>
+                <select id="unit_handover" name="unit" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
+                    <option value="">-- Pilih unit yang tersedia --</option>
+                    {% regroup available_units by asset as asset_groups %}
+                    {% for group in asset_groups %}
+                        <optgroup label="{{ group.grouper.name }}">
+                            {% for unit in group.list %}
+                                <option value="{{ unit.id }}">{{ unit.unit_code }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Hanya unit berstatus "Tersedia"</p>
+            </div>
+            
+            <!-- Unit - Mutation/Return (Digunakan) -->
+            <div id="unitUsedGroup" class="hidden">
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Pilih Unit Aset <span class="text-red-500">*</span></label>
+                <select id="unit_used" name="unit_used" onchange="onUsedUnitChange()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
+                    <option value="">-- Pilih unit yang sedang digunakan --</option>
+                    {% for unit in used_units %}
+                        <option value="{{ unit.id }}" data-holder-id="{{ unit.assigned_to.id }}" data-holder="{{ unit.assigned_to.name }}" data-holder-nik="{{ unit.assigned_to.nik }}">{{ unit.unit_code }} — {{ unit.asset.name }} ({{ unit.assigned_to.name }})</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Hanya unit berstatus "Digunakan"</p>
+            </div>
+            
+            <!-- Pemegang Saat Ini -->
+            <div id="currentHolderGroup" class="hidden">
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Pemegang Saat Ini</label>
+                <input type="text" id="currentHolderDisplay" disabled class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed font-bold">
+            </div>
+            
+            <!-- Karyawan Penerima (Handover & Mutation) -->
+            <div id="employeeGroup">
+                <label class="block text-sm font-bold text-gray-700 mb-1.5" id="employeeLabel">Diserahkan Kepada <span class="text-red-500">*</span></label>
+                <select id="dist_employee" name="employee" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
+                    <option value="">-- Pilih karyawan --</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.nik }} - {{ emp.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Tanggal -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Tanggal <span class="text-red-500">*</span></label>
+                <input type="date" name="assigned_date" id="dist_date" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
+            </div>
+            
+            <!-- Upload File -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Dokumen Bukti <span class="text-xs text-gray-400 font-normal">(Opsional)</span></label>
+                <input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" class="w-full px-2 py-1.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-kerinci/10 file:text-kerinci hover:file:bg-kerinci/20 cursor-pointer">
+            </div>
+
+            <!-- Catatan -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Catatan <span class="text-xs text-gray-400 font-normal">(Opsional)</span></label>
+                <textarea name="notes" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white" placeholder="Catatan tambahan..."></textarea>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeCreateModal()" class="px-5 py-2 border border-gray-300 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-kerinci text-white font-bold rounded-xl text-sm shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors" id="submitBtn">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Set default date
+    document.getElementById('dist_date').value = new Date().toISOString().split('T')[0];
+    
+    // Set initial type based on current tab
+    const currentTab = '{{ tab }}';
+    if (currentTab) {
+        document.getElementById('dist_type').value = currentTab;
+    }
+    
+    function onTypeChange() {
+        const type = document.getElementById('dist_type').value;
+        const unitHandover = document.getElementById('unitHandoverGroup');
+        const unitUsed = document.getElementById('unitUsedGroup');
+        const currentHolder = document.getElementById('currentHolderGroup');
+        const employeeGroup = document.getElementById('employeeGroup');
+        const employeeLabel = document.getElementById('employeeLabel');
+        const modalTitle = document.getElementById('modalTitle');
+        const form = document.getElementById('createForm');
+        
+        // Reset name attributes
+        document.getElementById('unit_handover').name = '';
+        document.getElementById('unit_used').name = '';
+        
+        if (type === 'handover') {
+            modalTitle.textContent = 'Serah Terima Aset';
+            unitHandover.classList.remove('hidden');
+            unitUsed.classList.add('hidden');
+            currentHolder.classList.add('hidden');
+            employeeGroup.classList.remove('hidden');
+            employeeLabel.innerHTML = 'Diserahkan Kepada <span class="text-red-500">*</span>';
+            document.getElementById('unit_handover').name = 'unit';
+            document.getElementById('unit_handover').required = true;
+            document.getElementById('dist_employee').required = true;
+            form.action = '{% url "distribusi_handover" %}';
+        } else if (type === 'mutation') {
+            modalTitle.textContent = 'Mutasi Aset';
+            unitHandover.classList.add('hidden');
+            unitUsed.classList.remove('hidden');
+            currentHolder.classList.remove('hidden');
+            employeeGroup.classList.remove('hidden');
+            employeeLabel.innerHTML = 'Karyawan Penerima Baru <span class="text-red-500">*</span>';
+            document.getElementById('unit_used').name = 'unit';
+            document.getElementById('unit_used').required = true;
+            document.getElementById('dist_employee').required = true;
+            form.action = '{% url "distribusi_mutation" %}';
+        } else if (type === 'return') {
+            modalTitle.textContent = 'Pengembalian Aset';
+            unitHandover.classList.add('hidden');
+            unitUsed.classList.remove('hidden');
+            currentHolder.classList.remove('hidden');
+            employeeGroup.classList.add('hidden');
+            document.getElementById('unit_used').name = 'unit';
+            document.getElementById('unit_used').required = true;
+            document.getElementById('dist_employee').required = false;
+            form.action = '{% url "distribusi_return" %}';
+        }
+        
+        if (type === 'mutation' || type === 'return') {
+            onUsedUnitChange();
+        } else {
+            // Tampilkan kembali semua karyawan untuk serah terima
+            const empSelect = document.getElementById('dist_employee');
+            if (empSelect) {
+                for (let i = 0; i < empSelect.options.length; i++) {
+                    empSelect.options[i].style.display = '';
+                }
+            }
+        }
+    }
+    
+    function onUsedUnitChange() {
+        const sel = document.getElementById('unit_used');
+        const opt = sel.options[sel.selectedIndex];
+        const holder = opt.getAttribute('data-holder') || '';
+        const nik = opt.getAttribute('data-holder-nik') || '';
+        const holderId = opt.getAttribute('data-holder-id') || '';
+        
+        document.getElementById('currentHolderDisplay').value = holder ? holder + ' (NIK: ' + nik + ')' : '';
+        
+        // Sembunyikan pemegang saat ini dari daftar penerima baru
+        const empSelect = document.getElementById('dist_employee');
+        if (empSelect) {
+            for (let i = 0; i < empSelect.options.length; i++) {
+                const empOpt = empSelect.options[i];
+                if (empOpt.value !== "") {
+                    if (empOpt.value === holderId) {
+                        empOpt.style.display = 'none';
+                    } else {
+                        empOpt.style.display = '';
+                    }
+                }
+            }
+            // Reset pilihan jika employee yang terpilih sekarang disembunyikan
+            if (empSelect.value === holderId) {
+                empSelect.value = "";
+            }
+        }
+    }
+    
+    function openCreateModal() {
+        onTypeChange(); // Initialize form based on type
+        
+        const modal = document.getElementById('createModal');
+        const overlay = document.getElementById('createOverlay');
+        const card = document.getElementById('createCard');
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            card.classList.remove('scale-95', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function closeCreateModal() {
+        const modal = document.getElementById('createModal');
+        const overlay = document.getElementById('createOverlay');
+        const card = document.getElementById('createCard');
+        
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        card.classList.remove('scale-100', 'opacity-100');
+        card.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // AJAX Search
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        const val = searchInput.value;
+        if (val) {
+            searchInput.focus();
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', searchInput.value);
+                
+                const tableContainer = document.getElementById('tableContainer');
+                tableContainer.style.opacity = '0.5';
+                tableContainer.style.transition = 'opacity 0.2s';
+
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newTableContainer = doc.getElementById('tableContainer');
+                        
+                        if (newTableContainer) {
+                            tableContainer.innerHTML = newTableContainer.innerHTML;
+                        }
+                        
+                        tableContainer.style.opacity = '1';
+                        window.history.pushState({}, '', url);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching search results:', error);
+                        tableContainer.style.opacity = '1';
+                    });
+            }, 300);
+        });
+        
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+    }
+
+</script>
+{% endblock %}

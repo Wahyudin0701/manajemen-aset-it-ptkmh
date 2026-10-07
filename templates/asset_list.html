@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Aset Induk{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset</p>
+        <h2 class="text-3xl font-extrabold text-gray-900">Semua Aset</h2>
+    </div>
+    <div class="flex items-center space-x-3">
+        <a href="{% url 'asset_add' %}" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Tambah Aset</span>
+        </a>
+    </div>
+</div>
+
+<!-- Category Tabs -->
+<div class="flex space-x-2 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
+    <a href="?tab=karyawan" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors {% if active_tab == 'karyawan' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Aset Karyawan
+    </a>
+    <a href="?tab=networking" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors {% if active_tab == 'networking' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Aset Networking & Infrastruktur
+    </a>
+</div>
+
+<div class="mb-4">
+    <form id="searchForm" method="GET" class="relative w-full sm:w-96">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari kode, nama aset, atau merek..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </form>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="tableContainer">
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
+                    <th class="p-4 font-bold text-center w-16">No</th>
+                    <th class="p-4 font-bold w-32">Kode Aset</th>
+                    <th class="p-4 font-bold">Nama Aset</th>
+                    <th class="p-4 font-bold">Merek</th>
+                    <th class="p-4 font-bold text-center">Jumlah (Qty)</th>
+                    {% if active_tab == 'karyawan' %}
+                    <th class="p-4 font-bold text-center">Ketersediaan</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-gray-200">
+                {% for asset in assets %}
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer group" onclick="openAssetModal(this)"
+                    data-id="{{ asset.id }}"
+                    data-code="{{ asset.asset_code }}"
+                    data-name="{{ asset.name }}"
+                    data-brand="{{ asset.brand|default:'' }}"
+                    data-cat="{{ asset.category.name }}"
+                    data-qty="{{ asset.qty }}"
+                    data-uom="{{ asset.uom }}"
+                    data-price="{{ asset.price }}"
+                    data-total="{{ asset.total_price }}"
+                    data-tersedia="{{ asset.unit_tersedia }}"
+                    data-digunakan="{{ asset.unit_digunakan }}">
+                    <td class="p-4 text-center text-gray-500">{{ forloop.counter }}</td>
+                    <td class="p-4 font-bold text-gray-600">{{ asset.asset_code }}</td>
+                    <td class="p-4">
+                        <p class="font-bold text-gray-800">{{ asset.name }}</p>
+                    </td>
+                    <td class="p-4 text-gray-600 font-medium">{{ asset.brand|default:"-" }}</td>
+                    <td class="p-4 text-center">
+                        <span class="font-bold text-gray-700">{{ asset.qty }}</span> <span class="text-xs text-gray-400">{{ asset.uom|default:"Unit" }}</span>
+                    </td>
+                    {% if active_tab == 'karyawan' %}
+                    <td class="p-4 text-center">
+                        <span class="font-extrabold text-emerald-600">{{ asset.unit_tersedia }}</span>
+                        <span class="text-gray-300 mx-1">/</span>
+                        <span class="font-bold text-blue-600">{{ asset.unit_digunakan }}</span>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-8 text-center text-gray-400 text-sm">
+                        Belum ada data aset untuk kategori ini.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+        <p>Menampilkan <span class="font-bold text-gray-900">{{ assets|length }}</span> aset</p>
+    </div>
+</div>
+
+<!-- Modal Detail Aset -->
+<div id="assetModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modalOverlay" onclick="closeModal()"></div>
+    
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="modalCard">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <p class="text-[10px] font-extrabold text-kerinci uppercase tracking-widest mb-1" id="m-cat"></p>
+                <h3 class="text-2xl font-extrabold text-gray-900 leading-tight" id="m-name"></h3>
+                <p class="text-sm font-medium text-gray-500 mt-1">Kode Induk: <span id="m-code" class="text-gray-900 font-bold"></span></p>
+                <p class="text-sm font-medium text-gray-500">Merek: <span id="m-brand" class="text-gray-900 font-bold"></span></p>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 hover:bg-gray-100 p-2 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                {% if active_tab == 'karyawan' %}
+                <div class="col-span-2">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Ketersediaan Unit</p>
+                    <div class="flex items-center space-x-1 mt-1 text-sm">
+                        <span class="text-emerald-600 font-extrabold" id="m-tersedia"></span>
+                        <span class="text-gray-400 text-xs mr-2">tersedia</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="text-blue-600 font-extrabold ml-2" id="m-digunakan"></span>
+                        <span class="text-gray-400 text-xs">digunakan</span>
+                    </div>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Total Kuantitas</p>
+                    <p class="font-medium text-sm text-gray-900"><span id="m-qty"></span> <span id="m-uom"></span></p>
+                </div>
+            </div>
+            <a href="#" id="m-btn-units" class="w-full flex items-center justify-center space-x-2 bg-indigo-50 text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <span>Lihat Unit Aset</span>
+            </a>
+        </div>
+        
+        <!-- Footer Actions -->
+        <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+            <a href="#" id="m-btn-edit" class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl text-sm hover:bg-amber-100 transition-colors flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span>Edit Data</span>
+            </a>
+            <button id="m-btn-delete" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <span>Hapus</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus -->
+<div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+    
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-8 transform transition-all scale-95 opacity-0 text-center" id="deleteCard">
+        <div class="w-20 h-20 bg-red-50 border-[6px] border-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        
+        <h3 class="text-2xl font-extrabold text-gray-900 mb-2">Hapus "<span id="d-code"></span>"?</h3>
+        <p class="text-gray-500 mb-8 max-w-md mx-auto">Apakah Anda yakin ingin menghapus aset <strong id="d-name"></strong> secara permanen? Aksi ini tidak dapat dibatalkan dan semua data historis terkait aset ini akan ikut terpengaruh.</p>
+        
+        <form id="deleteForm" method="POST" class="flex justify-center space-x-4">
+            {% csrf_token %}
+            <button type="button" onclick="closeDeleteModal()" class="px-8 py-3.5 border border-gray-300 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-50 transition-colors">Batal, Kembali</button>
+            <button type="submit" class="px-8 py-3.5 bg-red-500 text-white font-bold rounded-xl text-sm shadow-sm shadow-red-500/30 hover:bg-red-600 transition-colors">Ya, Hapus Permanen</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAssetModal(row) {
+        // Set Data
+        document.getElementById('m-cat').innerText = row.getAttribute('data-cat');
+        document.getElementById('m-name').innerText = row.getAttribute('data-name');
+        document.getElementById('m-code').innerText = row.getAttribute('data-code');
+        document.getElementById('m-brand').innerText = row.getAttribute('data-brand') || '-';
+        document.getElementById('m-qty').innerText = row.getAttribute('data-qty');
+        document.getElementById('m-uom').innerText = row.getAttribute('data-uom');
+        
+        const elTersedia = document.getElementById('m-tersedia');
+        if (elTersedia) {
+            elTersedia.innerText = row.getAttribute('data-tersedia');
+            document.getElementById('m-digunakan').innerText = row.getAttribute('data-digunakan');
+        }
+        
+        // Set Links
+        const id = row.getAttribute('data-id');
+        document.getElementById('m-btn-edit').href = '/aset/' + id + '/edit/';
+        document.getElementById('m-btn-units').href = '/aset/' + id + '/units/';
+        
+        // Hook up delete button to open second modal or block if has units
+        const btnDelete = document.getElementById('m-btn-delete');
+        const qty = parseInt(row.getAttribute('data-qty') || '0');
+        
+        if (qty > 0) {
+            btnDelete.className = 'px-5 py-2.5 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm cursor-not-allowed flex items-center space-x-2';
+            btnDelete.title = 'Aset tidak dapat dihapus karena masih memiliki ' + qty + ' unit fisik terdaftar.';
+            btnDelete.onclick = function(e) {
+                e.preventDefault();
+                alert('Peringatan: Aset tidak dapat dihapus karena masih memiliki ' + qty + ' unit fisik di dalamnya.\n\nSilakan hapus semua unit fisik aset ini terlebih dahulu dari menu "Lihat Unit Aset".');
+            };
+        } else {
+            btnDelete.className = 'px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2';
+            btnDelete.title = '';
+            btnDelete.onclick = function(e) {
+                e.preventDefault();
+                openDeleteModal(id, row.getAttribute('data-code'), row.getAttribute('data-name'));
+            };
+        }
+        
+        // Show Modal
+        const modal = document.getElementById('assetModal');
+        const overlay = document.getElementById('modalOverlay');
+        const card = document.getElementById('modalCard');
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            card.classList.remove('scale-95', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('assetModal');
+        const overlay = document.getElementById('modalOverlay');
+        const card = document.getElementById('modalCard');
+        
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        card.classList.remove('scale-100', 'opacity-100');
+        card.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function openDeleteModal(id, code, name) {
+        closeModal(); // Hide the first modal
+        
+        document.getElementById('d-code').innerText = code;
+        document.getElementById('d-name').innerText = name;
+        document.getElementById('deleteForm').action = '/aset/' + id + '/delete/';
+        
+        const modal = document.getElementById('deleteConfirmModal');
+        const overlay = document.getElementById('deleteOverlay');
+        const card = document.getElementById('deleteCard');
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            card.classList.remove('scale-95', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+        }, 10); // Start animation slightly after rendering
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteConfirmModal');
+        const overlay = document.getElementById('deleteOverlay');
+        const card = document.getElementById('deleteCard');
+        
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        card.classList.remove('scale-100', 'opacity-100');
+        card.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Auto-search menggunakan AJAX agar halaman tidak ter-reload penuh
+    let searchTimeout = null;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        // Memindahkan cursor ke akhir teks jika ada value awal
+        const val = searchInput.value;
+        if (val) {
+            searchInput.focus();
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', searchInput.value);
+                
+                const tableContainer = document.getElementById('tableContainer');
+                tableContainer.style.opacity = '0.5';
+                tableContainer.style.transition = 'opacity 0.2s';
+
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContainer = doc.getElementById('tableContainer');
+                        if (newContainer) {
+                            tableContainer.innerHTML = newContainer.innerHTML;
+                        }
+                        tableContainer.style.opacity = '1';
+                        // Update URL tanpa reload
+                        window.history.pushState({}, '', url);
+                    })
+                    .catch(error => {
+                        console.error('Error during search fetch:', error);
+                        tableContainer.style.opacity = '1';
+                    });
+            }, 300); // 300ms delay lebih responsif untuk AJAX
+        });
+    }
+</script>
+{% endblock %}

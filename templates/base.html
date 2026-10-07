@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Aset IT - Kerinci Hydropower</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kerinci: {
+                            DEFAULT: '#275d38', /* Dark green from logo */
+                            light: '#ebf5ed',   /* Very light green for backgrounds */
+                            accent: '#dda73b',  /* Golden yellow from the 'E' */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F8F9FA; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-[#F8F9FA] font-sans antialiased text-gray-900 h-screen flex overflow-hidden">
+    
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/50 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 h-full flex flex-col fixed lg:static z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="h-20 ml-6 flex items-center justify-start border-b border-gray-200">
+            <!-- Logo -->
+            <img src="{% static 'img/main_logo.png' %}?v=6" alt="IT All Role Kerinci Hydropower" class="h-9 w-auto object-contain">
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors {% if request.path == '/' %}bg-kerinci text-white shadow-sm shadow-kerinci/30{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            
+            <p class="text-xs font-bold text-gray-400 mt-6 mb-2 px-4">MANAJEMEN ASET</p>
+            <a href="{% url 'asset_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/aset/' in request.path %}bg-kerinci-light text-kerinci font-bold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-medium text-sm">Daftar Aset</span>
+            </a>
+            <a href="{% url 'distribusi_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/distribusi/' in request.path %}bg-kerinci-light text-kerinci font-bold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <span class="font-medium text-sm">Distribusi Aset</span>
+            </a>
+            <a href="{% url 'status_aset_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/status-aset/' in request.path %}bg-kerinci-light text-kerinci font-bold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="font-medium text-sm">Status Aset</span>
+            </a>
+            <a href="{% url 'employee_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/karyawan/' in request.path %}bg-kerinci-light text-kerinci font-bold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <span class="font-medium text-sm">Data Karyawan</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-kerinci text-white rounded-full flex items-center justify-center font-bold text-xs">A</div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-800">Admin IT</p>
+                    </div>
+                </div>
+                <a href="/admin/" target="_blank" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative">
+        <!-- Topbar -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 justify-between z-10">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-kerinci transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 class="font-bold text-gray-800 text-lg truncate max-w-[150px] sm:max-w-none">{% block page_title %}Dashboard{% endblock %}</h2>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 text-right">
+                    <div>
+                        <p class="text-sm font-bold text-gray-800">Administrator</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Admin</p>
+                    </div>
+                    <div class="w-10 h-10 bg-kerinci text-white rounded-full flex items-center justify-center font-bold shadow-sm shadow-kerinci/30">A</div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 overflow-y-auto" id="main-content">
+            <div class="p-4 md:p-8 max-w-[1400px] mx-auto w-full">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            }
+        }
+    </script>
+</body>
+</html>
