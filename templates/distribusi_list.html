@@ -6,12 +6,21 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
     <div>
         <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset</p>
-        <h2 class="text-3xl font-extrabold text-gray-900">Distribusi Aset</h2>
+        <div class="flex items-center space-x-3">
+            <h2 class="text-3xl font-extrabold text-gray-900">Distribusi Aset</h2>
+            <button onclick="openGuideModal()" class="w-5 h-5 rounded-full bg-gray-200 text-gray-600 hover:bg-kerinci hover:text-white flex items-center justify-center text-xs font-extrabold transition-colors shadow-sm shrink-0" title="Panduan Halaman">!</button>
+        </div>
     </div>
-    <button onclick="openCreateModal()" class="bg-kerinci text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center space-x-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        <span>Buat Baru</span>
-    </button>
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <a href="{% url 'distribusi_export_pdf' %}?tab={{ tab }}{% if search_query %}&q={{ search_query }}{% endif %}&sort={{ request.GET.sort|default:'desc' }}" id="exportPdfBtn" target="_blank" class="border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Ekspor PDF</span>
+        </a>
+        <button onclick="openCreateModal()" class="bg-kerinci text-white px-5 py-2 rounded-xl text-sm font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Buat Baru</span>
+        </button>
+    </div>
 </div>
 
 <!-- Tabs -->
@@ -34,20 +43,33 @@
 <div class="mb-4">
     <form id="searchForm" method="GET" class="relative w-full sm:w-96">
         <input type="hidden" name="tab" value="{{ tab }}">
-        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari kode unit, nama aset, atau nama karyawan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+        <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}">
+        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari NIK, nama, atau tanggal (cth: 07 Oct 2026)..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
     </form>
 </div>
 
 <!-- Table -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
+<div class="bg-white rounded-none sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest border-b border-[#002060]">
                     <th class="p-4 font-bold w-12 text-center">No</th>
-                    <th class="p-4 font-bold">Tanggal</th>
-                    <th class="p-4 font-bold">Unit Aset</th>
+                    <th class="p-4 font-bold">
+                        {% if request.GET.sort == 'asc' %}
+                            <a href="?tab={{ tab }}&q={{ search_query }}&sort=desc" class="flex items-center space-x-2 hover:text-gray-300 transition-colors" title="Urutkan Terbaru (Descending)">
+                                <span>Tanggal</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </a>
+                        {% else %}
+                            <a href="?tab={{ tab }}&q={{ search_query }}&sort=asc" class="flex items-center space-x-2 hover:text-gray-300 transition-colors" title="Urutkan Terlama (Ascending)">
+                                <span>Tanggal</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </a>
+                        {% endif %}
+                    </th>
+                    <th class="p-4 font-bold min-w-[250px]">Unit Aset</th>
                     {% if tab == 'handover' %}
                         <th class="p-4 font-bold">Diserahkan Kepada</th>
                     {% elif tab == 'mutation' %}
@@ -65,7 +87,12 @@
                 {% for log in assignments %}
                 <tr class="hover:bg-gray-50/50 transition-colors">
                     <td class="p-4 text-gray-500 font-medium text-center">{{ forloop.counter }}</td>
-                    <td class="p-4 font-medium text-gray-900">{{ log.assigned_date|date:"d M Y" }}</td>
+                    <td class="p-4 font-medium text-gray-900">
+                        <p>{{ log.assigned_date|date:"d M Y" }}</p>
+                        {% if log.created_at %}
+                        <p class="text-xs text-gray-400 mt-0.5 font-normal">{{ log.created_at|date:"H:i" }} WIB</p>
+                        {% endif %}
+                    </td>
                     <td class="p-4">
                         <a href="{% url 'asset_units' log.unit.asset.id %}" class="block group">
                             <p class="font-medium text-gray-800 group-hover:text-kerinci transition-colors">{{ log.unit.asset.name }}</p>
@@ -74,27 +101,35 @@
                     </td>
                     {% if tab == 'handover' %}
                         <td class="p-4">
-                            <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
-                            <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
+                            <a href="{% url 'employee_detail' log.employee.id %}" class="block group">
+                                <p class="font-bold text-gray-800 group-hover:text-kerinci transition-colors">{{ log.employee.name }}</p>
+                                <p class="text-xs text-gray-400 group-hover:underline">NIK: {{ log.employee.nik }}</p>
+                            </a>
                         </td>
                     {% elif tab == 'mutation' %}
                         <td class="p-4">
                             {% if log.from_employee %}
-                                <p class="font-bold text-gray-800">{{ log.from_employee.name }}</p>
-                                <p class="text-xs text-gray-400">NIK: {{ log.from_employee.nik }}</p>
+                                <a href="{% url 'employee_detail' log.from_employee.id %}" class="block group">
+                                    <p class="font-bold text-gray-800 group-hover:text-kerinci transition-colors">{{ log.from_employee.name }}</p>
+                                    <p class="text-xs text-gray-400 group-hover:underline">NIK: {{ log.from_employee.nik }}</p>
+                                </a>
                             {% else %}
                                 <span class="text-gray-300 italic text-xs">-</span>
                             {% endif %}
                         </td>
                         <td class="p-4">
-                            <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
-                            <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
+                            <a href="{% url 'employee_detail' log.employee.id %}" class="block group">
+                                <p class="font-bold text-gray-800 group-hover:text-kerinci transition-colors">{{ log.employee.name }}</p>
+                                <p class="text-xs text-gray-400 group-hover:underline">NIK: {{ log.employee.nik }}</p>
+                            </a>
                         </td>
                     {% elif tab == 'return' %}
                         <td class="p-4">
                             {% if log.from_employee %}
-                                <p class="font-bold text-gray-800">{{ log.from_employee.name }}</p>
-                                <p class="text-xs text-gray-400">NIK: {{ log.from_employee.nik }}</p>
+                                <a href="{% url 'employee_detail' log.from_employee.id %}" class="block group">
+                                    <p class="font-bold text-gray-800 group-hover:text-kerinci transition-colors">{{ log.from_employee.name }}</p>
+                                    <p class="text-xs text-gray-400 group-hover:underline">NIK: {{ log.from_employee.nik }}</p>
+                                </a>
                             {% else %}
                                 <p class="font-bold text-gray-800">{{ log.employee.name }}</p>
                                 <p class="text-xs text-gray-400">NIK: {{ log.employee.nik }}</p>
@@ -154,7 +189,7 @@
 <div id="createModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="createOverlay" onclick="closeCreateModal()"></div>
     
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="createCard">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] mx-auto max-h-[90vh] overflow-y-auto scrollbar-hide max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="createCard">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-extrabold text-gray-900" id="modalTitle">Serah Terima Aset</h3>
             <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100">
@@ -267,9 +302,12 @@
         const modalTitle = document.getElementById('modalTitle');
         const form = document.getElementById('createForm');
         
-        // Reset name attributes
+        // Reset name attributes and required
         document.getElementById('unit_handover').name = '';
+        document.getElementById('unit_handover').required = false;
         document.getElementById('unit_used').name = '';
+        document.getElementById('unit_used').required = false;
+        document.getElementById('dist_employee').required = false;
         
         if (type === 'handover') {
             modalTitle.textContent = 'Serah Terima Aset';
@@ -395,6 +433,18 @@
                 const url = new URL(window.location.href);
                 url.searchParams.set('q', searchInput.value);
                 
+                // Update Export PDF Button URL
+                const exportBtn = document.getElementById('exportPdfBtn');
+                if (exportBtn) {
+                    const exportUrl = new URL(exportBtn.href);
+                    if (searchInput.value) {
+                        exportUrl.searchParams.set('q', searchInput.value);
+                    } else {
+                        exportUrl.searchParams.delete('q');
+                    }
+                    exportBtn.href = exportUrl.toString();
+                }
+                
                 const tableContainer = document.getElementById('tableContainer');
                 tableContainer.style.opacity = '0.5';
                 tableContainer.style.transition = 'opacity 0.2s';
@@ -426,4 +476,54 @@
     }
 
 </script>
+{% endblock %}
+
+{% block page_title_guide %}Manajemen Distribusi Aset{% endblock %}
+
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Halaman <strong>Distribusi Aset</strong> mencatat riwayat pergerakan dan perpindahan tangan seluruh unit aset IT. Di halaman ini Anda dapat:</p>
+    
+    <div class="space-y-3">
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-kerinci bg-kerinci-light rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Pencatatan Distribusi Baru</h4>
+                <p>Klik tombol <strong>"Tambah Baru"</strong> di sudut kanan atas (berikon +) untuk mencatat aktivitas <strong>Serah Terima</strong>, <strong>Mutasi</strong>, atau <strong>Pengembalian</strong> unit dari/ke karyawan.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-blue-500 bg-blue-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Manajemen Dokumen Fisik (BAST)</h4>
+                <p>Pada kolom <strong>"Dokumen"</strong>, Anda dapat mengunggah file hasil scan (PDF/Foto) Berita Acara Serah Terima yang telah ditandatangani sebagai bukti fisik yang sah untuk setiap aktivitas.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-indigo-500 bg-indigo-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Melihat Riwayat Spesifik (Jejak Unit)</h4>
+                <p>Klik ikon <strong>Jam / Waktu</strong> pada kolom aksi di baris manapun untuk melihat jejak perjalanan sejarah lengkap dari unit tersebut (dari awal dibeli hingga status terakhirnya).</p>
+            </div>
+        </div>
+
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-amber-500 bg-amber-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Filter, Urutkan & Ekspor</h4>
+                <p>Gunakan tab untuk memfilter jenis aktivitas (Serah Terima/Mutasi/Return). Klik judul kolom <strong>"Tanggal"</strong> untuk mengurutkan (terbaru/terlama), dan klik <strong>Ekspor PDF</strong> untuk mencetak rekap data yang sedang tampil.</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

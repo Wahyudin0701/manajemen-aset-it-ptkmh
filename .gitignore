@@ -7,3 +7,9 @@ media/
 .idea/
 .vscode/
 *.log
+node_modules/
+staticfiles/
+*.log
+error.log
+.DS_Store
+Thumbs.db

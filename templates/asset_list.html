@@ -1,28 +1,38 @@
 {% extends 'base.html' %}
 
-{% block title %}Daftar Aset Induk{% endblock %}
+{% block page_title %}Daftar Aset
+{% endblock %}
 
 {% block content %}
 <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
     <div>
         <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset</p>
-        <h2 class="text-3xl font-extrabold text-gray-900">Semua Aset</h2>
+        <div class="flex items-center space-x-3">
+            <h2 class="text-3xl font-extrabold text-gray-900">Daftar Aset</h2>
+            <button onclick="openGuideModal()" class="w-5 h-5 rounded-full bg-gray-200 text-gray-600 hover:bg-kerinci hover:text-white flex items-center justify-center text-xs font-extrabold transition-colors shadow-sm shrink-0" title="Panduan Halaman">!</button>
+        </div>
     </div>
-    <div class="flex items-center space-x-3">
-        <a href="{% url 'asset_add' %}" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2">
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <a href="{% url 'asset_export_pdf' %}?tab={{ active_tab }}" target="_blank" class="border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Ekspor Aset</span>
+        </a>
+        <button onclick="openAddAssetModal()" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <span>Tambah Aset</span>
-        </a>
+        </button>
     </div>
 </div>
 
 <!-- Category Tabs -->
 <div class="flex space-x-2 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
-    <a href="?tab=karyawan" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors {% if active_tab == 'karyawan' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+    <a href="?tab=karyawan" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if active_tab == 'karyawan' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
         Aset Karyawan
+        <span class="ml-2 {% if active_tab == 'karyawan' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.karyawan|default:"0" }}</span>
     </a>
-    <a href="?tab=networking" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors {% if active_tab == 'networking' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+    <a href="?tab=networking" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if active_tab == 'networking' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
         Aset Networking & Infrastruktur
+        <span class="ml-2 {% if active_tab == 'networking' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.networking|default:"0" }}</span>
     </a>
 </div>
 
@@ -34,7 +44,7 @@
     </form>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="tableContainer">
+<div class="bg-white rounded-none sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="tableContainer">
 
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -42,12 +52,13 @@
                 <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
                     <th class="p-4 font-bold text-center w-16">No</th>
                     <th class="p-4 font-bold w-32">Kode Aset</th>
-                    <th class="p-4 font-bold">Nama Aset</th>
+                    <th class="p-4 font-bold min-w-[250px]">Nama Aset</th>
                     <th class="p-4 font-bold">Merek</th>
                     <th class="p-4 font-bold text-center">Jumlah (Qty)</th>
                     {% if active_tab == 'karyawan' %}
                     <th class="p-4 font-bold text-center">Ketersediaan</th>
                     {% endif %}
+                    <th class="p-4 font-bold text-center w-24">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-sm divide-y divide-gray-200">
@@ -58,6 +69,7 @@
                     data-name="{{ asset.name }}"
                     data-brand="{{ asset.brand|default:'' }}"
                     data-cat="{{ asset.category.name }}"
+                    data-cat-id="{{ asset.category.id }}"
                     data-qty="{{ asset.qty }}"
                     data-uom="{{ asset.uom }}"
                     data-price="{{ asset.price }}"
@@ -71,7 +83,10 @@
                     </td>
                     <td class="p-4 text-gray-600 font-medium">{{ asset.brand|default:"-" }}</td>
                     <td class="p-4 text-center">
-                        <span class="font-bold text-gray-700">{{ asset.qty }}</span> <span class="text-xs text-gray-400">{{ asset.uom|default:"Unit" }}</span>
+                        <a href="/aset/{{ asset.id }}/units/" onclick="event.stopPropagation();" class="inline-flex items-center justify-center space-x-1 px-4 py-1.5 bg-emerald-50 text-emerald-600 font-bold rounded-full text-sm border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                            <span>{{ asset.qty }} {{ asset.uom|default:"Unit" }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
                     </td>
                     {% if active_tab == 'karyawan' %}
                     <td class="p-4 text-center">
@@ -80,10 +95,15 @@
                         <span class="font-bold text-blue-600">{{ asset.unit_digunakan }}</span>
                     </td>
                     {% endif %}
+                    <td class="p-4 text-center">
+                        <button onclick="editAssetDirectly(event, this.closest('tr'))" class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100" title="Edit Aset">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="p-8 text-center text-gray-400 text-sm">
+                    <td colspan="8" class="p-8 text-center text-gray-400 text-sm">
                         Belum ada data aset untuk kategori ini.
                     </td>
                 </tr>
@@ -101,7 +121,7 @@
 <div id="assetModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modalOverlay" onclick="closeModal()"></div>
     
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="modalCard">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] mx-auto max-h-[90vh] overflow-y-auto max-w-lg relative z-10 p-6 transform transition-all scale-95 opacity-0" id="modalCard">
         <!-- Header -->
         <div class="flex justify-between items-start mb-5">
             <div>
@@ -143,11 +163,11 @@
         
         <!-- Footer Actions -->
         <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
-            <a href="#" id="m-btn-edit" class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl text-sm hover:bg-amber-100 transition-colors flex items-center space-x-2">
+            <button id="m-btn-edit" onclick="openEditModalFromCurrent()" class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl text-sm hover:bg-amber-100 transition-colors flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 <span>Edit Data</span>
-            </a>
-            <button id="m-btn-delete" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2">
+            </button>
+            <button id="m-btn-delete" class="hidden px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 <span>Hapus</span>
             </button>
@@ -159,7 +179,7 @@
 <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="deleteOverlay" onclick="closeDeleteModal()"></div>
     
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-8 transform transition-all scale-95 opacity-0 text-center" id="deleteCard">
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] mx-auto max-h-[90vh] overflow-y-auto max-w-lg relative z-10 p-8 transform transition-all scale-95 opacity-0 text-center" id="deleteCard">
         <div class="w-20 h-20 bg-red-50 border-[6px] border-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
@@ -176,6 +196,19 @@
 </div>
 
 <script>
+    function editAssetDirectly(event, row) {
+        event.stopPropagation(); // Mencegah modal detail terbuka
+        window.currentAssetData = {
+            id: row.getAttribute('data-id'),
+            code: row.getAttribute('data-code'),
+            name: row.getAttribute('data-name'),
+            brand: row.getAttribute('data-brand'),
+            cat_id: row.getAttribute('data-cat-id'),
+            uom: row.getAttribute('data-uom')
+        };
+        openEditModalFromCurrent();
+    }
+
     function openAssetModal(row) {
         // Set Data
         document.getElementById('m-cat').innerText = row.getAttribute('data-cat');
@@ -193,7 +226,15 @@
         
         // Set Links
         const id = row.getAttribute('data-id');
-        document.getElementById('m-btn-edit').href = '/aset/' + id + '/edit/';
+        window.currentAssetData = {
+            id: id,
+            code: row.getAttribute('data-code'),
+            name: row.getAttribute('data-name'),
+            brand: row.getAttribute('data-brand'),
+            cat_id: row.getAttribute('data-cat-id'),
+            uom: row.getAttribute('data-uom')
+        };
+        // document.getElementById('m-btn-edit').href is no longer needed since it's a button calling openEditModalFromCurrent()
         document.getElementById('m-btn-units').href = '/aset/' + id + '/units/';
         
         // Hook up delete button to open second modal or block if has units
@@ -201,14 +242,14 @@
         const qty = parseInt(row.getAttribute('data-qty') || '0');
         
         if (qty > 0) {
-            btnDelete.className = 'px-5 py-2.5 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm cursor-not-allowed flex items-center space-x-2';
+            btnDelete.className = 'hidden px-5 py-2.5 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm cursor-not-allowed flex items-center space-x-2';
             btnDelete.title = 'Aset tidak dapat dihapus karena masih memiliki ' + qty + ' unit fisik terdaftar.';
             btnDelete.onclick = function(e) {
                 e.preventDefault();
                 alert('Peringatan: Aset tidak dapat dihapus karena masih memiliki ' + qty + ' unit fisik di dalamnya.\n\nSilakan hapus semua unit fisik aset ini terlebih dahulu dari menu "Lihat Unit Aset".');
             };
         } else {
-            btnDelete.className = 'px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2';
+            btnDelete.className = 'hidden px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-sm hover:bg-red-100 transition-colors flex items-center space-x-2';
             btnDelete.title = '';
             btnDelete.onclick = function(e) {
                 e.preventDefault();
@@ -323,4 +364,302 @@
         });
     }
 </script>
+
+<!-- Modal Tambah Aset -->
+<div id="addAssetModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center overflow-y-auto">
+    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeAddAssetModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-2xl relative mx-auto z-10 my-8">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gray-900">Tambah Aset Baru</h3>
+            <button onclick="closeAddAssetModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form id="addAssetForm" action="{% url 'asset_add' %}" method="POST" class="p-6 space-y-6" onsubmit="submitAddAsset(event)">
+            {% csrf_token %}
+            
+            <div id="addAssetError" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span id="addAssetErrorText"></span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Kategori Aset <span class="text-red-500">*</span></label>
+                    <select name="category" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                        <option value="">-- Pilih Kategori --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Kode Aset <span class="text-red-500">*</span></label>
+                    <input type="text" id="addAssetCode" name="asset_code" required placeholder="Misal: DLL, LNV" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-white uppercase">
+                    <p class="text-xs text-gray-500 mt-1">* Kode aset tidak boleh sama dengan kode aset yang lain.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Nama Aset <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" placeholder="Misal: Laptop Lenovo ThinkPad" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Merek (Brand) <span class="text-red-500">*</span></label>
+                    <input type="text" name="brand" required placeholder="Misal: Lenovo, Dell" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Satuan (UoM) <span class="text-red-500">*</span></label>
+                    <input type="text" name="uom" required placeholder="Unit, Pcs, Roll..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button type="button" onclick="closeAddAssetModal()" class="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-6 py-3 bg-kerinci text-white font-bold rounded-xl text-sm shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center justify-center">
+                    <span>Simpan Aset Baru</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddAssetModal() {
+        document.getElementById('addAssetModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAddAssetModal() {
+        document.getElementById('addAssetModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('addAssetForm').reset();
+        document.getElementById('addAssetError').classList.add('hidden');
+        document.getElementById('addAssetCode').classList.remove('border-red-300', 'ring-1', 'ring-red-300');
+    }
+
+    async function submitAddAsset(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...';
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.reload();
+            } else {
+                const errorDiv = document.getElementById('addAssetError');
+                const errorText = document.getElementById('addAssetErrorText');
+                const inputField = document.getElementById('addAssetCode');
+                
+                errorText.textContent = data.error;
+                errorDiv.classList.remove('hidden');
+                
+                inputField.classList.add('border-red-300', 'ring-1', 'ring-red-300');
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+</script>
+
+<!-- Modal Edit Aset -->
+<div id="editAssetModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center overflow-y-auto">
+    <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeEditAssetModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-2xl relative mx-auto z-10 my-8">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gray-900">Edit Aset: <span id="editAssetTitle" class="text-kerinci"></span></h3>
+            <button onclick="closeEditAssetModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form id="editAssetForm" method="POST" class="p-6 space-y-6" onsubmit="submitEditAsset(event)">
+            {% csrf_token %}
+            
+            <div id="editAssetError" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span id="editAssetErrorText"></span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Kategori Aset <span class="text-red-500">*</span></label>
+                    <select id="editAssetCat" name="category" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                        <option value="">-- Pilih Kategori --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Kode Aset <span class="text-red-500">*</span></label>
+                    <input type="text" id="editAssetCode" name="asset_code" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-white uppercase">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Nama Aset <span class="text-red-500">*</span></label>
+                    <input type="text" id="editAssetName" name="name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Merek (Brand) <span class="text-red-500">*</span></label>
+                    <input type="text" id="editAssetBrand" name="brand" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Satuan (UoM) <span class="text-red-500">*</span></label>
+                    <input type="text" id="editAssetUom" name="uom" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light bg-gray-50">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button type="button" onclick="closeEditAssetModal()" class="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-6 py-3 bg-amber-500 text-white font-bold rounded-xl text-sm shadow-sm shadow-amber-500/30 hover:bg-amber-600 transition-colors flex items-center justify-center">
+                    <span>Simpan Perubahan</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModalFromCurrent() {
+        closeModal(); // close the info modal first
+        if(!window.currentAssetData) return;
+        
+        const data = window.currentAssetData;
+        
+        document.getElementById('editAssetTitle').innerText = data.code;
+        document.getElementById('editAssetCat').value = data.cat_id;
+        document.getElementById('editAssetCode').value = data.code;
+        document.getElementById('editAssetName').value = data.name;
+        document.getElementById('editAssetBrand').value = data.brand;
+        document.getElementById('editAssetUom').value = data.uom;
+        
+        document.getElementById('editAssetForm').action = '/aset/' + data.id + '/edit/';
+        
+        document.getElementById('editAssetModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditAssetModal() {
+        document.getElementById('editAssetModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('editAssetError').classList.add('hidden');
+        document.getElementById('editAssetCode').classList.remove('border-red-300', 'ring-1', 'ring-red-300');
+    }
+
+    async function submitEditAsset(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...';
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.reload();
+            } else {
+                const errorDiv = document.getElementById('editAssetError');
+                const errorText = document.getElementById('editAssetErrorText');
+                const inputField = document.getElementById('editAssetCode');
+                
+                errorText.textContent = data.error;
+                errorDiv.classList.remove('hidden');
+                
+                inputField.classList.add('border-red-300', 'ring-1', 'ring-red-300');
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+</script>
+{% endblock %}
+
+{% block page_title_guide %}Manajemen Daftar Aset{% endblock %}
+
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Halaman <strong>Daftar Aset</strong> digunakan untuk mendata seluruh inventaris induk perangkat IT. Di halaman ini Anda dapat:</p>
+    
+    <div class="space-y-3">
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-kerinci bg-kerinci-light rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Menambah dan Mengedit Aset</h4>
+                <p>Gunakan tombol "Tambah Aset" untuk memasukkan tipe perangkat baru. Anda juga dapat mengedit informasi aset dengan mengklik tombol pensil (edit) di kolom Aksi pada masing-masing baris.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-blue-500 bg-blue-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Melihat Detail Unit (Jumlah)</h4>
+                <p>Klik tombol berwarna hijau berbentuk kapsul (contoh: "5 Unit >") pada kolom Jumlah untuk masuk ke halaman detail unit. Di sana Anda dapat mendaftarkan nomor seri, mencetak QR code, dan melihat status masing-masing fisik barang.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-indigo-500 bg-indigo-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Kategori & Ekspor Data</h4>
+                <p>Terdapat tab untuk memfilter kategori (Aset Karyawan vs Networking). Anda juga bisa langsung mengekspor daftar yang sedang tampil ke bentuk laporan PDF.</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

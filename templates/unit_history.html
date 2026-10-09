@@ -1,19 +1,25 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Riwayat Unit - {{ unit.unit_code }}{% endblock %}
+{% block page_title %}Riwayat Unit{% endblock %}
 
 {% block content %}
-<div class="mb-8 flex justify-between items-start">
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between items-start space-y-4 sm:space-y-0">
     <div>
-        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Riwayat Aset Fisik</p>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Riwayat Unit</p>
         <h2 class="text-3xl font-extrabold text-gray-900">{{ unit.unit_code }}</h2>
         <p class="text-sm text-gray-500 mt-2">
-            Dari Aset Induk: <a href="{% url 'asset_units' unit.asset.id %}" class="font-bold text-blue-600 hover:underline">{{ unit.asset.name }}</a>
+            Dari Aset: <a href="{% url 'asset_units' unit.asset.id %}" class="font-bold text-blue-600 hover:underline">{{ unit.asset.name }}</a>
         </p>
     </div>
-    <a href="{% url 'asset_units' unit.asset.id %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
-        Kembali
-    </a>
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <a href="{% url 'unit_history_export_pdf' unit.id %}" target="_blank" class="border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-1 sm:flex-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Ekspor PDF</span>
+        </a>
+        <a href="{% url 'asset_units' unit.asset.id %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-1 sm:flex-none">
+            <span>Kembali</span>
+        </a>
+    </div>
 </div>
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">
@@ -60,10 +66,17 @@
                 </div>
                 
                 {% if log.employee %}
-                <div class="flex items-center space-x-2 mb-2">
-                    <div class="w-6 h-6 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-[9px] uppercase">{{ log.employee.name|make_list|first }}</div>
+                <a href="{% url 'employee_detail' log.employee.id %}" class="flex items-center space-x-2 mb-2 group w-max">
+                    <div class="w-6 h-6 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-[9px] uppercase transition-colors group-hover:bg-kerinci group-hover:text-white">{{ log.employee.name|make_list|first }}</div>
                     <div>
-                        <p class="font-bold text-gray-700 text-xs">{{ log.employee.name }}</p>
+                        <p class="font-bold text-gray-700 text-xs transition-colors group-hover:text-kerinci">{{ log.employee.name }}</p>
+                    </div>
+                </a>
+                {% elif log.deleted_employee_name %}
+                <div class="flex items-center space-x-2 mb-2 w-max opacity-60">
+                    <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-[9px] uppercase">{{ log.deleted_employee_name|make_list|first }}</div>
+                    <div>
+                        <p class="font-bold text-gray-500 text-xs">{{ log.deleted_employee_name }} <span class="text-[10px] font-normal italic">(Dihapus)</span></p>
                     </div>
                 </div>
                 {% endif %}

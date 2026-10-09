@@ -5,103 +5,185 @@
 {% block content %}
 <div class="mb-6">
     <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Sistem Administrator</p>
-    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Selamat datang, Administrator</h2>
+    <div class="flex items-center space-x-3 mb-2">
+        <h2 class="text-3xl font-extrabold text-gray-900">Selamat datang, {% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Administrator{% endif %}</h2>
+        <button onclick="openGuideModal()" class="w-5 h-5 rounded-full bg-gray-200 text-gray-600 hover:bg-kerinci hover:text-white flex items-center justify-center text-xs font-extrabold transition-colors shadow-sm shrink-0" title="Panduan Halaman">!</button>
+    </div>
     <p class="text-sm text-gray-500">Berikut ringkasan operasional sistem manajemen aset IT secara keseluruhan.</p>
 </div>
 
-<!-- Widgets Row -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- 5 Cards Statistik -->
+<div class="flex flex-wrap lg:flex-nowrap gap-4 mb-10">
+    <!-- Aset Karyawan -->
+    <a href="{% url 'asset_list' %}?tab=karyawan" class="w-[calc(50%-0.5rem)] lg:flex-1 flex flex-col items-center group">
+        <div class="bg-[#e9f2eb] rounded-2xl w-full h-20 sm:h-24 flex items-center justify-center mb-3 sm:mb-4 shadow-sm border border-[#d3e5d7] group-hover:bg-[#d3e5d7] transition-all group-hover:shadow-md">
+            <p class="text-4xl sm:text-5xl font-extrabold text-[#1f5c35]">{{ count_karyawan }}</p>
+        </div>
+        <p class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center group-hover:text-[#1f5c35] transition-colors">Aset Karyawan</p>
+    </a>
     
-    <!-- Widget 1 -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
-        <div>
-            <h3 class="text-4xl font-extrabold text-gray-900 mb-1">12</h3>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Karyawan</p>
+    <!-- Aset Networking -->
+    <a href="{% url 'asset_list' %}?tab=networking" class="w-[calc(50%-0.5rem)] lg:flex-1 flex flex-col items-center group">
+        <div class="bg-blue-50 rounded-2xl w-full h-20 sm:h-24 flex items-center justify-center mb-3 sm:mb-4 shadow-sm border border-blue-100 group-hover:bg-blue-100 transition-all group-hover:shadow-md">
+            <p class="text-4xl sm:text-5xl font-extrabold text-blue-600">{{ count_networking }}</p>
         </div>
-        <div class="w-12 h-12 bg-kerinci-light text-kerinci rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <p class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center group-hover:text-blue-600 transition-colors">Aset Networking</p>
+    </a>
+    
+    <!-- Aset Tersedia -->
+    <a href="{% url 'status_aset_list' %}?tab=tersedia" class="w-[calc(33.333%-0.67rem)] lg:flex-1 flex flex-col items-center group mt-2 lg:mt-0">
+        <div class="bg-emerald-50 rounded-2xl w-full h-16 sm:h-24 flex items-center justify-center mb-2 sm:mb-4 shadow-sm border border-emerald-100 group-hover:bg-emerald-100 transition-all group-hover:shadow-md">
+            <p class="text-3xl sm:text-5xl font-extrabold text-emerald-600">{{ count_tersedia }}</p>
         </div>
-    </div>
-
-    <!-- Widget 2 -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
-        <div>
-            <h3 class="text-4xl font-extrabold text-gray-900 mb-1">54</h3>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Aset IT</p>
+        <p class="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center group-hover:text-emerald-600 transition-colors leading-tight">Aset Tersedia</p>
+    </a>
+    
+    <!-- Aset Digunakan -->
+    <a href="{% url 'status_aset_list' %}?tab=digunakan" class="w-[calc(33.333%-0.67rem)] lg:flex-1 flex flex-col items-center group mt-2 lg:mt-0">
+        <div class="bg-blue-50 rounded-2xl w-full h-16 sm:h-24 flex items-center justify-center mb-2 sm:mb-4 shadow-sm border border-blue-100 group-hover:bg-blue-100 transition-all group-hover:shadow-md">
+            <p class="text-3xl sm:text-5xl font-extrabold text-blue-600">{{ count_digunakan }}</p>
         </div>
-        <div class="w-12 h-12 bg-kerinci-accent/20 text-yellow-600 rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        <p class="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center group-hover:text-blue-600 transition-colors leading-tight">Aset Digunakan</p>
+    </a>
+    
+    <!-- Aset Maintenance -->
+    <a href="{% url 'status_aset_list' %}?tab=rusak" class="w-[calc(33.333%-0.67rem)] lg:flex-1 flex flex-col items-center group mt-2 lg:mt-0">
+        <div class="bg-amber-50 rounded-2xl w-full h-16 sm:h-24 flex items-center justify-center mb-2 sm:mb-4 shadow-sm border border-amber-100 group-hover:bg-amber-100 transition-all group-hover:shadow-md">
+            <p class="text-3xl sm:text-5xl font-extrabold text-amber-500">{{ count_maintenance }}</p>
         </div>
-    </div>
-
-    <!-- Widget 3 -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
-        <div>
-            <h3 class="text-4xl font-extrabold text-kerinci mb-1">18</h3>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Aset Digunakan</p>
-        </div>
-        <div class="w-12 h-12 bg-kerinci-light text-kerinci rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-        </div>
-    </div>
-
+        <p class="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center group-hover:text-amber-500 transition-colors leading-tight">Aset Maintenance</p>
+    </a>
 </div>
 
-<!-- Content Row -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Log Aktivitas -->
-    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <h3 class="text-sm font-bold text-gray-800 mb-4">5 Log Penyerahan Aset Terbaru</h3>
-        <div class="space-y-4">
-            <!-- Item -->
-            <div class="flex items-start space-x-4 pb-4 border-b border-gray-50">
-                <div class="w-8 h-8 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-xs mt-1">A</div>
-                <div>
-                    <p class="text-sm text-gray-800">Penyerahan <strong>Laptop ThinkPad</strong> ke <strong>Ahmad</strong></p>
-                    <p class="text-xs text-gray-400 mt-1">15 minutes ago - Divisi Konstruksi</p>
+<!-- 3 Lists Bawah: Log Distribusi -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Kiri: Log Serah Terima -->
+    <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col h-[400px] lg:h-[640px]">
+        
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-800">Log Serah Terima</h3>
+            <a href="/distribusi/?tab=handover" class="text-xs font-bold text-kerinci hover:text-kerinci-dark transition-colors">Lihat Semua</a>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-2">
+            {% for log in recent_handovers %}
+            <a href="{% url 'unit_history' log.unit.id %}" class="block group">
+                <div class="flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                    <div class="w-8 h-8 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-kerinci group-hover:text-white transition-colors">
+                        {% if log.employee %}{{ log.employee.name|make_list|first|upper }}{% else %}?{% endif %}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800 group-hover:text-kerinci transition-colors line-clamp-1">{{ log.unit.unit_code }} <span class="text-gray-400 font-normal ml-1">ke</span> {% if log.employee %}{{ log.employee.name }}{% else %}-{% endif %}</p>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ log.unit.asset.name }}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">{{ log.assigned_date|date:"d M Y" }}</p>
+                    </div>
                 </div>
+            </a>
+            {% empty %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-gray-400 text-sm">Belum ada data serah terima.</p>
             </div>
-            <!-- Item -->
-            <div class="flex items-start space-x-4 pb-4 border-b border-gray-50">
-                <div class="w-8 h-8 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-xs mt-1">S</div>
-                <div>
-                    <p class="text-sm text-gray-800">Pengembalian <strong>Starlink</strong> dari <strong>Site B</strong></p>
-                    <p class="text-xs text-gray-400 mt-1">2 hours ago - Kondisi Normal</p>
+            {% endfor %}
+        </div>
+    
+    </div>
+    
+    <!-- Kanan: Log Mutasi & Pengembalian -->
+    <div class="lg:col-span-5 flex flex-col gap-6 lg:h-[640px]">
+        <!-- Log Mutasi -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col flex-1 min-h-[300px] lg:min-h-0">
+            
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-800">Log Mutasi</h3>
+            <a href="/distribusi/?tab=mutation" class="text-xs font-bold text-kerinci hover:text-kerinci-dark transition-colors">Lihat Semua</a>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-2">
+            {% for log in recent_mutations %}
+            <a href="{% url 'unit_history' log.unit.id %}" class="block group">
+                <div class="flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                    <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-1">{{ log.unit.unit_code }} <span class="text-gray-400 font-normal mx-1">➜</span> {% if log.employee %}{{ log.employee.name }}{% else %}-{% endif %}</p>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ log.unit.asset.name }}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Dari: {% if log.from_employee %}{{ log.from_employee.name }}{% else %}-{% endif %} • {{ log.assigned_date|date:"d M Y" }}</p>
+                    </div>
                 </div>
+            </a>
+            {% empty %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-gray-400 text-sm">Belum ada data mutasi.</p>
             </div>
+            {% endfor %}
+        </div>
+    
+        </div>
+        
+        <!-- Log Pengembalian -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col flex-1 min-h-[300px] lg:min-h-0">
+            <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-800">Log Pengembalian</h3>
+            <a href="/distribusi/?tab=return" class="text-xs font-bold text-kerinci hover:text-kerinci-dark transition-colors">Lihat Semua</a>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-2">
+            {% for log in recent_returns %}
+            <a href="{% url 'unit_history' log.unit.id %}" class="block group">
+                <div class="flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                    <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800 group-hover:text-amber-500 transition-colors line-clamp-1">{{ log.unit.unit_code }} <span class="text-gray-400 font-normal ml-1">dari</span> {% if log.employee %}{{ log.employee.name }}{% else %}-{% endif %}</p>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ log.unit.asset.name }}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">{{ log.assigned_date|date:"d M Y" }}</p>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-gray-400 text-sm">Belum ada data pengembalian.</p>
+            </div>
+            {% endfor %}
+        </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Status Aset -->
-    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-sm font-bold text-gray-800">Status Ketersediaan</h3>
-            <a href="#" class="text-xs font-bold text-kerinci hover:underline">Lihat Semua</a>
-        </div>
-        <div class="space-y-4">
-            <!-- Item -->
-            <div class="p-4 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors flex justify-between items-center cursor-pointer">
-                <div>
-                    <h4 class="font-bold text-gray-800 text-sm">Tersedia (Gudang)</h4>
-                    <p class="text-xs text-gray-500 mt-1">Laptop: 5, Starlink: 2, HT: 10</p>
-                </div>
-                <div class="text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+{% block page_title_guide %}Dashboard Operasional{% endblock %}
+
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Selamat datang di <strong>Dashboard</strong>! Halaman ini adalah pusat ringkasan untuk memantau aktivitas dan status aset IT secara cepat. Di halaman ini Anda dapat:</p>
+    
+    <div class="space-y-3">
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-kerinci bg-kerinci-light rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
-            
-            <!-- Item -->
-            <div class="p-4 rounded-xl border border-kerinci-light bg-kerinci-light transition-colors flex justify-between items-center cursor-pointer">
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <h4 class="font-bold text-kerinci text-sm">Sedang Diperbaiki</h4>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-kerinci/10 text-kerinci">AKTIF</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-1">HT: 2 unit</p>
-                </div>
-                <div class="text-kerinci">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Memantau Ringkasan Angka Aset</h4>
+                <p>Lihat total aset yang tersedia, sedang digunakan, atau dalam masa perbaikan (maintenance) melalui deretan kartu metrik di bagian atas.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-blue-500 bg-blue-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Melihat Log Distribusi Terbaru</h4>
+                <p>Bagian bawah halaman menampilkan aktivitas terbaru terkait Serah Terima, Mutasi, dan Pengembalian aset untuk melacak pergerakan aset terkini.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-amber-500 bg-amber-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Akses Cepat (Shortcut)</h4>
+                <p>Klik pada <strong>kartu metrik angka aset</strong> di bagian atas, atau pada tulisan <strong>"Lihat Semua"</strong> pada log untuk melompat langsung ke halaman detail terkait.</p>
             </div>
         </div>
     </div>

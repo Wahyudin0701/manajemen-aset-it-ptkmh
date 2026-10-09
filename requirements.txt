@@ -1,0 +1,14 @@
+﻿asgiref==3.12.1
+charset-normalizer==3.5.2
+colorama==0.4.6
+Django==5.2.17
+django-htmx==1.29.0
+django-vite==3.2.0
+pillow==12.3.0
+PyMySQL==1.2.3
+python-dotenv==1.2.4
+qrcode==8.2
+reportlab==5.0.1
+sqlparse==0.6.0
+tzdata==2026.5
+whitenoise==6.12.0

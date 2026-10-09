@@ -1,8 +1,10 @@
+import uuid
 from django.db import models
 
 class Employee(models.Model):
     nik = models.CharField(max_length=20, unique=True, verbose_name="NIK")
     name = models.CharField(max_length=150, verbose_name="Nama Karyawan")
+    position = models.CharField(max_length=100, blank=True, null=True, verbose_name="Jabatan")
 
     def __str__(self):
         return f"{self.nik} - {self.name}"
@@ -43,10 +45,27 @@ class AssetUnit(models.Model):
         ('pensiun', 'Dipensiunkan'),
     ]
 
+    AREA_CHOICES = [
+        ('Regulating Weir (RW)', 'Regulating Weir (RW)'),
+        ('Jakon', 'Jakon'),
+        ('Beringin Tunggal (BT)', 'Beringin Tunggal (BT)'),
+        ('DAM', 'DAM'),
+        ('Adit 1', 'Adit 1'),
+        ('Adit 2', 'Adit 2'),
+        ('Adit 3', 'Adit 3'),
+        ('Gudang Induk (GI)', 'Gudang Induk (GI)'),
+        ('Vertical Shaft (VS)', 'Vertical Shaft (VS)'),
+        ('Power House (PH)', 'Power House (PH)'),
+        ('Lain-lainnya', 'Lain-lainnya'),
+    ]
+
+    id_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='units', verbose_name="Jenis Aset")
     unit_code = models.CharField(max_length=60, unique=True, verbose_name="Kode Unit")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='tersedia', verbose_name="Status")
     assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='held_units', verbose_name="Pengguna Aset (PIC)")
+    area = models.CharField(max_length=50, choices=AREA_CHOICES, blank=True, null=True, verbose_name="Area Pemasangan")
+    location = models.CharField(max_length=255, blank=True, null=True, verbose_name="Lokasi Spesifik")
 
     def __str__(self):
         return self.unit_code
@@ -89,14 +108,15 @@ class AssetAssignment(models.Model):
     ]
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='handover', verbose_name="Tipe Distribusi")
-    unit = models.ForeignKey(AssetUnit, on_delete=models.CASCADE, verbose_name="Unit Aset")
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name="Karyawan Penerima", related_name='received_assignments')
+    unit = models.ForeignKey(AssetUnit, on_delete=models.PROTECT, verbose_name="Unit Aset")
+    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Karyawan Penerima", related_name='received_assignments')
     from_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Karyawan Pengirim", related_name='sent_assignments')
     assigned_date = models.DateField(verbose_name="Tanggal Transaksi")
     returned_date = models.DateField(blank=True, null=True, verbose_name="Tanggal Dikembalikan")
     document = models.FileField(upload_to='bast_documents/', blank=True, null=True, verbose_name="Dokumen Fisik")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aktif', verbose_name="Status Penugasan")
     notes = models.TextField(blank=True, null=True, verbose_name="Catatan Tambahan")
+    created_at = models.DateTimeField(auto_now_add=True, null=True, verbose_name="Waktu Dibuat")
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.unit.unit_code} → {self.employee.name}"

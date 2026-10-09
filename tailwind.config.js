@@ -2,14 +2,19 @@
 module.exports = {
   content: [
     "./templates/**/*.html",
-    "./assets/templates/**/*.html",
-    "./**/views.py",
+    "./assets/**/*.html",
   ],
   theme: {
     extend: {
       colors: {
-        'brand-blue': '#2563EB',
-        'brand-bg': '#F8F9FA'
+        kerinci: {
+          light: '#e8f5e9',
+          DEFAULT: '#1b5e20',
+          dark: '#144d17',
+        }
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
       }
     },
   },
