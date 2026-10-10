@@ -20,7 +20,8 @@ urlpatterns = [
     # path('admin/', admin.site.urls),  # Django Admin dinonaktifkan
     path('', dashboard, name='dashboard'),
     path('aset/', asset_list, name='asset_list'),
-    path('aset/export/', asset_export_pdf, asset_export_excel, name='asset_export_pdf, asset_export_excel'),
+    path('aset/export/', asset_export_pdf, name='asset_export_pdf'),
+    path('aset/export-excel/', asset_export_excel, name='asset_export_excel'),
     path('aset/add/', asset_add, name='asset_add'),
     path('aset/<int:asset_id>/edit/', asset_edit, name='asset_edit'),
     path('aset/<int:asset_id>/delete/', asset_delete, name='asset_delete'),
