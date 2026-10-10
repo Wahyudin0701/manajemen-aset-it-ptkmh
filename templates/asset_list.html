@@ -13,13 +13,13 @@
         </div>
     </div>
     <div class="flex items-center space-x-3 w-full sm:w-auto">
-        <div class="relative group inline-block w-full sm:w-auto flex-1 sm:flex-none">
-              <button class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
+        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
+              <button onclick="var d = document.getElementById('exportMenuAsset'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                   <span>Ekspor Aset</span>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </button>
-              <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 hidden group-hover:block z-50">
+              <div id="exportMenuAsset" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
                   <a href="{% url 'asset_export_pdf' %}?tab={{ active_tab }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
                       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                       Format PDF
@@ -677,3 +677,10 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+document.addEventListener('click', function() {
+    var menu = document.getElementById('exportMenuAsset');
+    if (menu) menu.style.display = 'none';
+});
+</script>
