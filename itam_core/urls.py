@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from django.contrib import admin
 from django.urls import path, re_path
-from assets.views import profile_view, custom_404_view, login_view, logout_view, unit_qr_code, unit_public_detail, dashboard, status_aset_list, status_aset_export_pdf, asset_list, asset_add, asset_edit, asset_delete, asset_units, asset_units_export_pdf, unit_add, unit_edit, unit_history, unit_history_export_pdf, unit_update_status, distribusi_list, distribusi_handover, distribusi_mutation, distribusi_return, distribusi_export_pdf, distribusi_upload_doc, employee_list, employee_export_pdf, employee_detail, employee_detail_export_pdf, employee_create, employee_edit, employee_delete, asset_export_pdf
+from assets.views import profile_view, custom_404_view, login_view, logout_view, unit_qr_code, unit_public_detail, dashboard, status_aset_list, status_aset_export_pdf, asset_list, asset_add, asset_edit, asset_delete, asset_units, asset_units_export_pdf, unit_add, unit_edit, unit_history, unit_history_export_pdf, unit_update_status, distribusi_list, distribusi_handover, distribusi_mutation, distribusi_return, distribusi_export_pdf, distribusi_upload_doc, employee_list, employee_export_pdf, employee_detail, employee_detail_export_pdf, employee_create, employee_edit, employee_delete, asset_export_pdf, backup_database_view
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -13,6 +13,7 @@ admin.site.index_title = "Manajemen Database Inti"
 
 urlpatterns = [
     path('profil/', profile_view, name='profile'),
+    path('backup/', backup_database_view, name='backup_database'),
     path('404/', custom_404_view, name='test_404'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),

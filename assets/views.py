@@ -2410,3 +2410,29 @@ def profile_view(request):
         return redirect('profile')
         
     return render(request, 'profile.html')
+
+
+@login_required
+def backup_database_view(request):
+    """View to handle manual database backup."""
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Anda tidak memiliki akses ke halaman ini.")
+        
+    if request.method == 'POST':
+        import io
+        from django.core.management import call_command
+        from django.http import HttpResponse
+        import datetime
+        
+        buffer = io.StringIO()
+        # Exclude contenttypes and auth permissions which can cause issues on restore
+        call_command('dumpdata', '--exclude', 'contenttypes', '--exclude', 'auth.permission', '--exclude', 'admin.logentry', '--exclude', 'sessions', stdout=buffer)
+        buffer.seek(0)
+        
+        now = datetime.datetime.now().strftime('%Y-%m-%d_%H%M')
+        response = HttpResponse(buffer.getvalue(), content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="backup_manajemen_aset_{now}.json"'
+        return response
+        
+    return render(request, 'backup.html')
