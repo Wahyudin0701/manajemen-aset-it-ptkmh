@@ -2040,7 +2040,7 @@ def unit_history_export_pdf(request, unit_id):
     info_style = ParagraphStyle('InfoStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=9, textColor=HexColor('#555555'))
     info_bold = ParagraphStyle('InfoBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=HexColor('#333333'))
     
-    total_data = logs.count()
+    total_data = len(logs)
     info_data = [
         [Paragraph('Nama Aset', info_style), Paragraph(f': {unit.asset.name}', info_bold), Paragraph('Total Kejadian', info_style), Paragraph(f': {total_data} riwayat', info_bold)],
         [Paragraph('Kode Unit', info_style), Paragraph(f': {unit.unit_code}', info_bold), Paragraph('Tanggal Cetak', info_style), Paragraph(f': {tanggal_str}', info_bold)]
