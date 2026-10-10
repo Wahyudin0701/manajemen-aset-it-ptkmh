@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from django.contrib import admin
 from django.urls import path, re_path
-from assets.views import profile_view, custom_404_view, login_view, logout_view, unit_qr_code, unit_public_detail, dashboard, status_aset_list, status_aset_export_pdf, asset_list, asset_add, asset_edit, asset_delete, asset_units, asset_units_export_pdf, unit_add, unit_edit, unit_history, unit_history_export_pdf, unit_update_status, distribusi_list, distribusi_handover, distribusi_mutation, distribusi_return, distribusi_export_pdf, distribusi_upload_doc, employee_list, employee_export_pdf, employee_detail, employee_detail_export_pdf, employee_create, employee_edit, employee_delete, asset_export_pdf, backup_database_view
+from assets.views import profile_view, custom_404_view, login_view, logout_view, unit_qr_code, unit_public_detail, dashboard, status_aset_list, status_aset_export_pdf, asset_list, asset_add, asset_edit, asset_delete, asset_units, asset_units_export_pdf, unit_add, unit_edit, unit_history, unit_history_export_pdf, unit_update_status, distribusi_list, distribusi_handover, distribusi_mutation, distribusi_return, distribusi_export_pdf, distribusi_upload_doc, employee_list, employee_export_pdf, employee_detail, employee_detail_export_pdf, employee_create, employee_edit, employee_delete, asset_export_pdf, asset_export_excel, backup_database_view
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -20,7 +20,7 @@ urlpatterns = [
     # path('admin/', admin.site.urls),  # Django Admin dinonaktifkan
     path('', dashboard, name='dashboard'),
     path('aset/', asset_list, name='asset_list'),
-    path('aset/export/', asset_export_pdf, name='asset_export_pdf'),
+    path('aset/export/', asset_export_pdf, asset_export_excel, name='asset_export_pdf, asset_export_excel'),
     path('aset/add/', asset_add, name='asset_add'),
     path('aset/<int:asset_id>/edit/', asset_edit, name='asset_edit'),
     path('aset/<int:asset_id>/delete/', asset_delete, name='asset_delete'),
