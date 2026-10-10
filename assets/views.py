@@ -2589,13 +2589,13 @@ def distribusi_export_excel(request):
     import datetime
     
     tab = request.GET.get('tab', 'semua')
-    assignments = AssetAssignment.objects.select_related('unit__asset', 'employee', 'from_employee').order_by('-assignment_date')
+    assignments = AssetAssignment.objects.select_related('unit__asset', 'employee', 'from_employee').order_by('-assigned_date')
     
     if tab == 'aktif':
-        assignments = assignments.filter(status='active')
+        assignments = assignments.filter(status='aktif')
         status_label = 'Aktif'
     elif tab == 'kembali':
-        assignments = assignments.filter(status='returned')
+        assignments = assignments.filter(status='dikembalikan')
         status_label = 'Dikembalikan'
     else:
         status_label = 'Semua'
@@ -2641,11 +2641,11 @@ def distribusi_export_excel(request):
             pihak = f"{from_name} -> {to_name}"
             
         tipe = dict(AssetAssignment.TYPE_CHOICES).get(a.type, a.type)
-        status_str = "Aktif" if a.status == 'active' else "Dikembalikan"
+        status_str = "Aktif" if a.status == 'aktif' else "Dikembalikan"
         
         data = [
             idx,
-            a.assignment_date.strftime('%d %b %Y') if a.assignment_date else '-',
+            a.assigned_date.strftime('%d %b %Y') if a.assigned_date else '-',
             tipe,
             a.unit.unit_code if a.unit else '-',
             a.unit.asset.name if a.unit and a.unit.asset else '-',
@@ -2712,7 +2712,7 @@ def status_aset_export_excel(request):
     ws['A2'] = f"Kategori: {title_label}"
     ws['A2'].alignment = center_align
     
-    headers = ['No', 'Kode Unit', 'Nama Aset', 'S/N', 'Status', 'Keterangan']
+    headers = ['No', 'Kode Unit', 'Nama Aset', 'Area', 'Status', 'Lokasi']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -2729,9 +2729,9 @@ def status_aset_export_excel(request):
             idx,
             u.unit_code,
             u.asset.name if u.asset else '-',
-            u.serial_number or '-',
+            u.area or '-',
             status_map.get(u.status, u.status),
-            u.condition_notes or '-'
+            u.location or '-'
         ]
         
         for col_num, cell_value in enumerate(data, 1):
@@ -2819,7 +2819,7 @@ def employee_detail_export_excel(request, emp_id):
     import datetime
     
     employee = get_object_or_404(Employee, id=emp_id)
-    assignments = AssetAssignment.objects.filter(employee=employee, status='active').select_related('unit__asset')
+    assignments = AssetAssignment.objects.filter(employee=employee, status='aktif').select_related('unit__asset')
         
     wb = Workbook()
     ws = wb.active
@@ -2840,7 +2840,7 @@ def employee_detail_export_excel(request, emp_id):
     ws['A2'] = f"{employee.name} ({employee.nik})"
     ws['A2'].alignment = center_align
     
-    headers = ['No', 'Kode Unit', 'Nama Aset', 'S/N', 'Tanggal Diberikan']
+    headers = ['No', 'Kode Unit', 'Nama Aset', 'Area', 'Tanggal Diberikan']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -2855,8 +2855,8 @@ def employee_detail_export_excel(request, emp_id):
             idx,
             a.unit.unit_code if a.unit else '-',
             a.unit.asset.name if a.unit and a.unit.asset else '-',
-            a.unit.serial_number if a.unit else '-',
-            a.assignment_date.strftime('%d %b %Y') if a.assignment_date else '-'
+            a.unit.area if a.unit else '-',
+            a.assigned_date.strftime('%d %b %Y') if a.assigned_date else '-'
         ]
         
         for col_num, cell_value in enumerate(data, 1):
@@ -2993,7 +2993,7 @@ def asset_units_export_excel(request, asset_id):
     ws['A2'] = f"{asset.name}"
     ws['A2'].alignment = center_align
     
-    headers = ['No', 'Kode Unit', 'S/N', 'Status', 'Lokasi/Pengguna', 'Keterangan']
+    headers = ['No', 'Kode Unit', 'Area', 'Status', 'Lokasi/Pengguna', '-']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -3008,7 +3008,7 @@ def asset_units_export_excel(request, asset_id):
         lokasi = "-"
         
         if u.status == 'digunakan':
-            assignment = AssetAssignment.objects.filter(unit=u, status='active').first()
+            assignment = AssetAssignment.objects.filter(unit=u, status='aktif').first()
             if assignment and assignment.employee:
                 lokasi = assignment.employee.name
         elif u.status == 'rusak' and u.location:
@@ -3017,10 +3017,10 @@ def asset_units_export_excel(request, asset_id):
         data = [
             idx,
             u.unit_code,
-            u.serial_number or '-',
+            u.area or '-',
             status_map.get(u.status, u.status),
             lokasi,
-            u.condition_notes or '-'
+            u.location or '-'
         ]
         
         for col_num, cell_value in enumerate(data, 1):
