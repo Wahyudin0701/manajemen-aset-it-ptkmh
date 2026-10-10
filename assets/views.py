@@ -2770,12 +2770,12 @@ def employee_export_excel(request):
     left_align = Alignment(horizontal="left", vertical="center")
     border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
     
-    ws.merge_cells('A1:E1')
+    ws.merge_cells('A1:D1')
     ws['A1'] = "LAPORAN DATA KARYAWAN"
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = center_align
     
-    headers = ['No', 'NIK', 'Nama Karyawan', 'Departemen', 'Jabatan']
+    headers = ['No', 'NIK', 'Nama Karyawan', 'Jabatan']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -2790,7 +2790,6 @@ def employee_export_excel(request):
             idx,
             e.nik,
             e.name,
-            e.department,
             e.position or '-'
         ]
         
@@ -2802,7 +2801,7 @@ def employee_export_excel(request):
             else:
                 cell.alignment = left_align
                 
-    for col, width in zip(['A','B','C','D','E'], [5, 15, 30, 25, 25]):
+    for col, width in zip(['A','B','C','D'], [5, 15, 35, 35]):
         ws.column_dimensions[col].width = width
         
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
