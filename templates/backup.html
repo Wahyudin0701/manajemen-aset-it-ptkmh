@@ -15,7 +15,7 @@
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
             </div>
             <div>
-                <h3 class="text-xl font-bold text-gray-900">Ekspor Data Sistem (JSON)</h3>
+                <h3 class="text-xl font-bold text-gray-900">Ekspor Data Sistem</h3>
                 <p class="text-sm text-gray-500">Mencakup aset, riwayat, dan karyawan.</p>
             </div>
         </div>
@@ -25,7 +25,15 @@
         </p>
 
         <form method="POST">
-            {% csrf_token %}
+            {% csrf_token %}        
+        <div class="mb-6">
+            <label for="format" class="block text-sm font-semibold text-gray-700 mb-2">Format File Backup</label>
+            <select name="format" id="format" class="w-full rounded-xl border-gray-200 shadow-sm focus:border-kerinci focus:ring focus:ring-kerinci focus:ring-opacity-50 text-sm py-2.5 px-3">
+                <option value="json">Format JSON (Standar Django - loaddata)</option>
+                <option value="sql">Format SQL (Database MySQL Mentah)</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-2">*Pilih SQL jika Anda ingin melakukan import langsung via phpMyAdmin/MySQL.</p>
+        </div>
             <button type="submit" class="w-full bg-kerinci hover:bg-kerinci-dark text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-sm shadow-kerinci/30 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-kerinci">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 <span>Unduh File Backup Sekarang</span>

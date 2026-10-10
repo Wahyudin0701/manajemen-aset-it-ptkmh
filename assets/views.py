@@ -2421,18 +2421,54 @@ def backup_database_view(request):
         
     if request.method == 'POST':
         import io
-        from django.core.management import call_command
-        from django.http import HttpResponse
         import datetime
+        from django.core.management import call_command
+        from django.http import HttpResponse, HttpResponseServerError
         
-        buffer = io.StringIO()
-        # Exclude contenttypes and auth permissions which can cause issues on restore
-        call_command('dumpdata', '--exclude', 'contenttypes', '--exclude', 'auth.permission', '--exclude', 'admin.logentry', '--exclude', 'sessions', stdout=buffer)
-        buffer.seek(0)
-        
+        backup_format = request.POST.get('format', 'json')
         now = datetime.datetime.now().strftime('%Y-%m-%d_%H%M')
-        response = HttpResponse(buffer.getvalue(), content_type='application/json')
-        response['Content-Disposition'] = f'attachment; filename="backup_manajemen_aset_{now}.json"'
-        return response
+        
+        if backup_format == 'sql':
+            import subprocess
+            import os
+            from django.conf import settings
+            
+            db = settings.DATABASES['default']
+            db_name = db['NAME']
+            db_user = db['USER']
+            db_pass = db['PASSWORD']
+            db_host = db['HOST'] or '127.0.0.1'
+            db_port = db['PORT'] or '3306'
+            
+            cmd = ['mysqldump', f'--user={db_user}', f'--host={db_host}', f'--port={db_port}']
+            # Don't include password parameter if empty
+            if db_pass:
+                cmd.append(f'--password={db_pass}')
+            cmd.append(db_name)
+            
+            try:
+                # Add mysqldump to PATH if running in Laragon on Windows
+                env = os.environ.copy()
+                result = subprocess.run(cmd, env=env, capture_output=True, text=False)
+                
+                if result.returncode != 0:
+                    return HttpResponseServerError(f"Gagal melakukan backup SQL. Pastikan 'mysqldump' tersedia di server. Error: {result.stderr.decode('utf-8', errors='ignore')}")
+                
+                response = HttpResponse(result.stdout, content_type='application/sql')
+                response['Content-Disposition'] = f'attachment; filename="backup_manajemen_aset_{now}.sql"'
+                return response
+            except Exception as e:
+                return HttpResponseServerError(f"Terjadi kesalahan saat mengeksekusi mysqldump: {str(e)}")
+                
+        else:
+            # Default JSON
+            buffer = io.StringIO()
+            # Exclude contenttypes and auth permissions which can cause issues on restore
+            call_command('dumpdata', '--exclude', 'contenttypes', '--exclude', 'auth.permission', '--exclude', 'admin.logentry', '--exclude', 'sessions', stdout=buffer)
+            buffer.seek(0)
+            
+            response = HttpResponse(buffer.getvalue(), content_type='application/json')
+            response['Content-Disposition'] = f'attachment; filename="backup_manajemen_aset_{now}.json"'
+            return response
         
     return render(request, 'backup.html')
