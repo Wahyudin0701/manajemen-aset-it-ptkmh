@@ -30,9 +30,9 @@
         Aset Karyawan
         <span class="ml-2 {% if active_tab == 'karyawan' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.karyawan|default:"0" }}</span>
     </a>
-    <a href="?tab=networking" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if active_tab == 'networking' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-        Aset Networking & Infrastruktur
-        <span class="ml-2 {% if active_tab == 'networking' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.networking|default:"0" }}</span>
+    <a href="?tab=network" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if active_tab == 'network' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Aset Network & Infrastruktur
+        <span class="ml-2 {% if active_tab == 'network' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.network|default:"0" }}</span>
     </a>
 </div>
 
@@ -657,7 +657,7 @@
             </div>
             <div>
                 <h4 class="font-bold text-gray-900 mb-1">Kategori & Ekspor Data</h4>
-                <p>Terdapat tab untuk memfilter kategori (Aset Karyawan vs Networking). Anda juga bisa langsung mengekspor daftar yang sedang tampil ke bentuk laporan PDF.</p>
+                <p>Terdapat tab untuk memfilter kategori (Aset Karyawan vs Network). Anda juga bisa langsung mengekspor daftar yang sedang tampil ke bentuk laporan PDF.</p>
             </div>
         </div>
     </div>

@@ -15,9 +15,9 @@ from .models import Asset, AssetUnit, UnitLog, Category, Employee, AssetAssignme
 
 @login_required
 def dashboard(request):
-    # Top 2 cards: Aset Karyawan & Aset Networking
+    # Top 2 cards: Aset Karyawan & Aset Network
     count_karyawan = AssetUnit.objects.filter(asset__category__name__icontains='Karyawan').count()
-    count_networking = AssetUnit.objects.filter(asset__category__name__icontains='Networking').count()
+    count_network = AssetUnit.objects.filter(asset__category__name__icontains='Network').count()
     
     # 3 Status cards
     count_tersedia = AssetUnit.objects.filter(status='tersedia').count()
@@ -31,7 +31,7 @@ def dashboard(request):
     
     context = {
         'count_karyawan': count_karyawan,
-        'count_networking': count_networking,
+        'count_network': count_network,
         'count_tersedia': count_tersedia,
         'count_digunakan': count_digunakan,
         'count_maintenance': count_maintenance,
@@ -60,8 +60,8 @@ def asset_list(request):
             Q(brand__icontains=search_query)
         )
         
-    if active_tab == 'networking':
-        assets = assets.filter(category__name__icontains='Networking')
+    if active_tab == 'network':
+        assets = assets.filter(category__name__icontains='Network')
     else:
         assets = assets.filter(category__name__icontains='Karyawan')
 
@@ -70,7 +70,7 @@ def asset_list(request):
     
     counts = {
         'karyawan': Asset.objects.filter(category__name__icontains='Karyawan').count(),
-        'networking': Asset.objects.filter(category__name__icontains='Networking').count(),
+        'network': Asset.objects.filter(category__name__icontains='Network').count(),
     }
     
     return render(request, 'asset_list.html', {
@@ -237,7 +237,7 @@ def unit_update_status(request, unit_id):
         new_status = request.POST.get('status')
         notes = request.POST.get('notes', '')
         old_status = unit.status
-        is_networking = 'Networking' in unit.asset.category.name
+        is_network = 'Network' in unit.asset.category.name
         
         new_area = request.POST.get('area')
         new_location = request.POST.get('location')
@@ -245,7 +245,7 @@ def unit_update_status(request, unit_id):
         status_changed = new_status and new_status != old_status
         location_changed = False
         
-        if is_networking and new_status == 'digunakan':
+        if is_network and new_status in ['digunakan', 'rusak']:
             if unit.area != new_area or unit.location != new_location:
                 location_changed = True
                 
@@ -263,7 +263,7 @@ def unit_update_status(request, unit_id):
             elif location_changed:
                 log_notes += "Lokasi / Area diperbarui. "
                 
-            if new_status == 'digunakan' and is_networking:
+            if new_status in ['digunakan', 'rusak'] and is_network:
                 unit.area = new_area
                 unit.location = new_location
                 log_notes += f"Pemasangan di {unit.area}, {unit.location}. "
@@ -327,8 +327,8 @@ def status_aset_list(request):
     
     units = AssetUnit.objects.select_related('asset', 'assigned_to', 'asset__category').order_by('-id')
     
-    if cat_filter == 'networking':
-        units = units.filter(asset__category__name__icontains='Networking')
+    if cat_filter == 'network':
+        units = units.filter(asset__category__name__icontains='Network')
     else:
         units = units.filter(asset__category__name__icontains='Karyawan')
         
@@ -757,9 +757,9 @@ def asset_export_pdf(request):
         total_units=Count('units'),
     )
     
-    if active_tab == 'networking':
-        assets = assets.filter(category__name__icontains='Networking')
-        category_label = 'Aset Networking & Infrastruktur'
+    if active_tab == 'network':
+        assets = assets.filter(category__name__icontains='Network')
+        category_label = 'Aset Network & Infrastruktur'
     else:
         assets = assets.filter(category__name__icontains='Karyawan')
         category_label = 'Aset Karyawan'
@@ -1422,9 +1422,9 @@ def status_aset_export_pdf(request):
     
     units = AssetUnit.objects.select_related('asset', 'assigned_to', 'asset__category').order_by('-id')
     
-    if cat_filter == 'networking':
-        units = units.filter(asset__category__name__icontains='Networking')
-        cat_label = 'Networking & Infrastruktur'
+    if cat_filter == 'network':
+        units = units.filter(asset__category__name__icontains='Network')
+        cat_label = 'Network & Infrastruktur'
     else:
         units = units.filter(asset__category__name__icontains='Karyawan')
         cat_label = 'Karyawan'
@@ -1538,7 +1538,7 @@ def status_aset_export_pdf(request):
     elements.append(HRFlowable(width="100%", thickness=1, color=border_color, spaceAfter=4*mm))
     
     if tab != 'tersedia':
-        if cat_filter == 'networking':
+        if cat_filter == 'network':
             table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('NAMA ASET', header_cell), Paragraph('STATUS', header_cell), Paragraph('LOKASI (AREA)', header_cell)]
         else:
             table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('NAMA ASET', header_cell), Paragraph('STATUS', header_cell), Paragraph('DIPEGANG OLEH', header_cell)]
@@ -1556,7 +1556,7 @@ def status_aset_export_pdf(request):
         row = [Paragraph(str(idx), cell_center), Paragraph(unit.unit_code, cell_bold_style), asset_info, Paragraph(status_text, cell_center)]
         
         if tab != 'tersedia':
-            if cat_filter == 'networking':
+            if cat_filter == 'network':
                 area = unit.area or '-'
                 loc = unit.location or '-'
                 holder_info = [Paragraph(f"Area: {area}", cell_bold_style), Paragraph(f"Lokasi: {loc}", cell_small)]
@@ -2233,9 +2233,9 @@ def asset_units_export_pdf(request, asset_id):
     elements.append(Spacer(1, 6*mm))
     elements.append(HRFlowable(width="100%", thickness=1, color=border_color, spaceAfter=4*mm))
     
-    is_networking = 'Networking' in asset.category.name
+    is_network = 'Network' in asset.category.name
     
-    if is_networking:
+    if is_network:
         table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('STATUS', header_cell), Paragraph('LOKASI (AREA)', header_cell)]
     else:
         table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('STATUS', header_cell), Paragraph('DIPEGANG OLEH', header_cell)]
@@ -2263,7 +2263,7 @@ def asset_units_export_pdf(request, asset_id):
         unit_table.setStyle(TableStyle(table_style))
     else:
         for idx, unit in enumerate(units, 1):
-            if is_networking:
+            if is_network:
                 area = unit.area or '-'
                 loc = unit.location or '-'
                 holder_info = [Paragraph(f"Area: {area}", cell_bold_style), Paragraph(f"Lokasi: {loc}", cell_small)]

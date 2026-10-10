@@ -148,7 +148,7 @@ CREATE TABLE `assets_category` (
 
 LOCK TABLES `assets_category` WRITE;
 /*!40000 ALTER TABLE `assets_category` DISABLE KEYS */;
-INSERT INTO `assets_category` VALUES (10,'Aset Karyawan'),(11,'Aset Networking');
+INSERT INTO `assets_category` VALUES (10,'Aset Karyawan'),(11,'Aset Network');
 /*!40000 ALTER TABLE `assets_category` ENABLE KEYS */;
 UNLOCK TABLES;
 
