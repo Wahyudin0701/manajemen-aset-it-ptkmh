@@ -56,7 +56,21 @@ class Asset(models.Model):
                         suffix = unit.unit_code.rsplit('-', 1)[-1]
                     else:
                         suffix = unit.unit_code
-                    new_unit_code = f"{self.asset_code}-{suffix}"
+
+                    target_code = f"{self.asset_code}-{suffix}"
+                    if AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                        counter = 1
+                        try:
+                            base_num = int(suffix)
+                            while AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                                target_code = f"{self.asset_code}-{base_num + counter:03d}"
+                                counter += 1
+                        except ValueError:
+                            while AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                                target_code = f"{self.asset_code}-{suffix}-{counter}"
+                                counter += 1
+                    new_unit_code = target_code
+
                     if unit.unit_code != new_unit_code:
                         old_unit_code = unit.unit_code
                         unit.unit_code = new_unit_code

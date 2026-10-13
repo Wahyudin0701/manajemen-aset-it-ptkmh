@@ -4,6 +4,7 @@ from django.db import migrations
 
 def sync_unit_codes(apps, schema_editor):
     Asset = apps.get_model('assets', 'Asset')
+    AssetUnit = apps.get_model('assets', 'AssetUnit')
     UnitLog = apps.get_model('assets', 'UnitLog')
 
     for asset in Asset.objects.all():
@@ -13,15 +14,30 @@ def sync_unit_codes(apps, schema_editor):
                     suffix = unit.unit_code.rsplit('-', 1)[-1]
                 else:
                     suffix = unit.unit_code
-                new_unit_code = f"{asset.asset_code}-{suffix}"
-                if unit.unit_code != new_unit_code:
+                
+                target_code = f"{asset.asset_code}-{suffix}"
+
+                # Pastikan tidak bentrok dengan unit_code yang sudah ada di database
+                if AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                    counter = 1
+                    try:
+                        base_num = int(suffix)
+                        while AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                            target_code = f"{asset.asset_code}-{base_num + counter:03d}"
+                            counter += 1
+                    except ValueError:
+                        while AssetUnit.objects.filter(unit_code=target_code).exclude(pk=unit.pk).exists():
+                            target_code = f"{asset.asset_code}-{suffix}-{counter}"
+                            counter += 1
+
+                if unit.unit_code != target_code:
                     old_unit_code = unit.unit_code
-                    unit.unit_code = new_unit_code
+                    unit.unit_code = target_code
                     unit.save(update_fields=['unit_code'])
                     UnitLog.objects.create(
                         unit=unit,
                         action='other',
-                        notes=f"Sinkronisasi kode unit otomatis dari {old_unit_code} ke {new_unit_code} mengikuti kode aset induk."
+                        notes=f"Sinkronisasi kode unit otomatis dari {old_unit_code} ke {target_code} mengikuti kode aset induk."
                     )
 
 class Migration(migrations.Migration):
