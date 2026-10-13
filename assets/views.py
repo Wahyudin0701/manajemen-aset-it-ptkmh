@@ -224,6 +224,19 @@ def asset_edit(request, asset_id):
         if new_code and new_code != old_code:
             if Asset.objects.exclude(id=asset.id).filter(asset_code=new_code).exists():
                 return JsonResponse({'success': False, 'error': f"Kode Aset '{new_code}' sudah digunakan oleh aset lain."})
+            
+            # Validasi jika kode unit baru berpotensi bentrok dengan unit dari aset lain
+            for unit in asset.units.all():
+                if unit.unit_code.startswith(f"{old_code}-"):
+                    suffix = unit.unit_code[len(f"{old_code}-"):]
+                elif '-' in unit.unit_code:
+                    suffix = unit.unit_code.rsplit('-', 1)[-1]
+                else:
+                    suffix = unit.unit_code
+                target_unit_code = f"{new_code}-{suffix}"
+                if AssetUnit.objects.exclude(asset=asset).filter(unit_code=target_unit_code).exists():
+                    return JsonResponse({'success': False, 'error': f"Gagal mengubah kode aset: Kode unit '{target_unit_code}' sudah digunakan oleh unit lain di sistem."})
+
             asset.asset_code = new_code
             
         asset.category_id = category_id
@@ -232,7 +245,7 @@ def asset_edit(request, asset_id):
         asset.uom = uom
         asset.save()
         
-        messages.success(request, f'Perubahan pada aset {old_code} berhasil disimpan.')
+        messages.success(request, f'Perubahan pada aset {new_code} berhasil disimpan.')
         return JsonResponse({'success': True})
     return redirect('asset_list')
 @login_required

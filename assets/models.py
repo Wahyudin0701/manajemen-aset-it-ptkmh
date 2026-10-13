@@ -36,6 +36,37 @@ class Asset(models.Model):
     def __str__(self):
         return f"{self.asset_code} - {self.name}"
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_code = None
+        if not is_new:
+            old_obj = Asset.objects.filter(pk=self.pk).only('asset_code').first()
+            if old_obj and old_obj.asset_code != self.asset_code:
+                old_code = old_obj.asset_code
+
+        super().save(*args, **kwargs)
+
+        if old_code and old_code != self.asset_code:
+            from django.db import transaction
+            with transaction.atomic():
+                for unit in self.units.all():
+                    if unit.unit_code.startswith(f"{old_code}-"):
+                        suffix = unit.unit_code[len(f"{old_code}-"):]
+                    elif '-' in unit.unit_code:
+                        suffix = unit.unit_code.rsplit('-', 1)[-1]
+                    else:
+                        suffix = unit.unit_code
+                    new_unit_code = f"{self.asset_code}-{suffix}"
+                    if unit.unit_code != new_unit_code:
+                        old_unit_code = unit.unit_code
+                        unit.unit_code = new_unit_code
+                        unit.save(update_fields=['unit_code'])
+                        UnitLog.objects.create(
+                            unit=unit,
+                            action='other',
+                            notes=f"Kode unit diperbarui otomatis dari {old_unit_code} ke {new_unit_code} karena perubahan kode aset induk."
+                        )
+
 class AssetUnit(models.Model):
     """Unit fisik individual dari sebuah jenis aset. Contoh: CCTV-001, CCTV-002"""
     STATUS_CHOICES = [
