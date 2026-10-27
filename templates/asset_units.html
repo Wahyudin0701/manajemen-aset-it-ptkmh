@@ -15,7 +15,7 @@
     <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
         <!-- 1. Fitur Ekspor: Mobile baris atas kiri (flex-1), Desktop tengah (sm:order-2 sm:flex-none) -->
         <div class="order-1 sm:order-2 relative inline-block flex-1 sm:flex-none w-auto">
-            <button onclick="var d = document.getElementById('exportMenuUnits'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-1.5 sm:space-x-2 justify-center whitespace-nowrap shadow-sm">
+            <button onclick="var d = document.getElementById('exportMenuUnits'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center whitespace-nowrap shadow-sm">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Ekspor Data</span>
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -34,8 +34,8 @@
         </div>
         
         <!-- 2. Tombol Tambah Unit: Mobile baris atas kanan (flex-1), Desktop paling kanan (sm:order-3 sm:flex-none) -->
-        <button onclick="openAddUnitModal()" class="order-2 sm:order-3 bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 flex-1 sm:flex-none whitespace-nowrap">
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <button onclick="openAddUnitModal()" class="order-2 sm:order-3 bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center justify-center space-x-2 flex-1 sm:flex-none whitespace-nowrap">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <span>Tambah Unit</span>
         </button>
 
