@@ -26,31 +26,7 @@
             <span class="font-mono text-gray-500 font-semibold">{{ item.item_code }}</span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">{{ item.name }}</h2>
-
-            <!-- Status Badge -->
-            {% if item.stock_status == 'out_of_stock' %}
-            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 inline-flex items-center gap-1.5 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                Stok Habis
-            </span>
-            {% elif item.stock_status == 'low_stock' %}
-            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center gap-1.5 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                Stok Menipis
-            </span>
-            {% else %}
-            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1.5 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Stok Tersedia
-            </span>
-            {% endif %}
-
-            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                {{ item.get_category_display }}
-            </span>
-        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">{{ item.name }}</h2>
 
         <p class="text-xs text-gray-500 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span class="font-semibold text-gray-700">{{ item.brand|default:"Tanpa Merek" }}</span>
