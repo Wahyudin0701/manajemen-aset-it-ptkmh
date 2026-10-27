@@ -29,15 +29,15 @@
     </div>
 
     <!-- Header Actions -->
-    <div class="flex items-center space-x-3 w-full sm:w-auto">
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
         <!-- Ekspor Dropdown -->
-        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
-            <button onclick="var d = document.getElementById('exportMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <div class="relative inline-block flex-1 sm:flex-none w-auto">
+            <button onclick="var d = document.getElementById('exportMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center whitespace-nowrap shadow-sm">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Ekspor Consumable</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <div id="exportMenuConsumable" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
+            <div id="exportMenuConsumable" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50 py-1">
                 <a href="{% url 'consumable_export_pdf' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     Format PDF
@@ -52,11 +52,11 @@
 
         {% if not is_read_only %}
         <!-- Transaksi Stok Dropdown -->
-        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
-            <button onclick="var d = document.getElementById('trxMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-gray-300 bg-white text-gray-700 rounded-xl px-4 py-2 text-sm font-bold hover:bg-gray-50 transition-colors flex items-center space-x-2 justify-center shadow-sm">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+        <div class="relative inline-block flex-1 sm:flex-none w-auto">
+            <button onclick="var d = document.getElementById('trxMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-gray-300 bg-white text-gray-700 rounded-xl px-4 py-2 text-sm font-bold hover:bg-gray-50 transition-colors flex items-center space-x-2 justify-center shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
                 <span>Transaksi Stok</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <div id="trxMenuConsumable" style="display: none;" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50 py-1">
                 <button onclick="document.getElementById('trxMenuConsumable').style.display='none'; openModalBarangMasuk();" class="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 font-bold transition-colors text-left">
@@ -76,8 +76,8 @@
         </div>
 
         <!-- Tambah Item Button -->
-        <button onclick="openCreateItemModal()" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <button onclick="openCreateItemModal()" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto sm:flex-none whitespace-nowrap">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <span>Tambah Item</span>
         </button>
         {% endif %}
@@ -105,8 +105,8 @@
 </div>
 
 <!-- Filters & Search -->
-<div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-    <form id="searchForm" method="GET" class="relative w-full sm:w-96">
+<div class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <form id="searchForm" method="GET" class="relative w-full md:w-96 min-w-0">
         <input type="hidden" name="status" value="{{ status_filter }}">
         {% if category_filter %}<input type="hidden" name="category" value="{{ category_filter }}">{% endif %}
         {% if location_filter %}<input type="hidden" name="location" value="{{ location_filter }}">{% endif %}
@@ -114,23 +114,29 @@
         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
     </form>
 
-    <div class="flex items-center space-x-2 w-full sm:w-auto">
-        <select onchange="location = this.value;" class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
-            <option value="?status={{ status_filter }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}">Semua Kategori</option>
-            {% for cat_val, cat_label in categories %}
-            <option value="?status={{ status_filter }}&category={{ cat_val }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
-            {% endfor %}
-        </select>
+    <div class="flex items-center gap-2 w-full md:w-auto min-w-0">
+        <div class="grid grid-cols-2 gap-2 flex-1 md:flex-none w-full md:w-auto min-w-0">
+            <div class="min-w-0">
+                <select onchange="location = this.value;" class="w-full md:w-48 truncate px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm cursor-pointer" style="min-width: 0; max-width: 100%;">
+                    <option value="?status={{ status_filter }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}">Semua Kategori</option>
+                    {% for cat_val, cat_label in categories %}
+                    <option value="?status={{ status_filter }}&category={{ cat_val }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <select onchange="location = this.value;" class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
-            <option value="?status={{ status_filter }}&category={{ category_filter }}&q={{ search_query }}">Semua Lokasi</option>
-            {% for loc in locations %}
-            <option value="?status={{ status_filter }}&category={{ category_filter }}&location={{ loc }}&q={{ search_query }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
-            {% endfor %}
-        </select>
+            <div class="min-w-0">
+                <select onchange="location = this.value;" class="w-full md:w-44 truncate px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm cursor-pointer" style="min-width: 0; max-width: 100%;">
+                    <option value="?status={{ status_filter }}&category={{ category_filter }}&q={{ search_query }}">Semua Lokasi</option>
+                    {% for loc in locations %}
+                    <option value="?status={{ status_filter }}&category={{ category_filter }}&location={{ loc }}&q={{ search_query }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
 
         {% if search_query or category_filter or location_filter or status_filter %}
-        <a href="{% url 'consumable_list' %}" class="px-3 py-2 text-xs font-bold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl bg-white transition-colors shadow-sm" title="Reset Filter">
+        <a href="{% url 'consumable_list' %}" class="px-3 py-2 text-xs font-bold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl bg-white transition-colors shadow-sm shrink-0 whitespace-nowrap" title="Reset Filter">
             Reset
         </a>
         {% endif %}
