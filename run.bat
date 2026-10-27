@@ -73,11 +73,12 @@ echo   [10] Buat Virtual Environment Baru dan Install Dependensi Otomatis
 echo   [11] Buka Django Shell Interaktif
 echo   [12] Cek Kesehatan Sintaks Kode (py_compile check)
 echo   [13] Buka Port 8000 di Windows Firewall (Akses Jaringan LAN)
+echo   [14] Push Perubahan ke Server Gitea (git push -u origin main)
 echo.
 echo   [0] Keluar
 echo.
 echo ==============================================================================
-set /p choice="Pilih menu [0-13]: "
+set /p choice="Pilih menu [0-14]: "
 
 if "%choice%"=="1" goto cmd_server
 if "%choice%"=="2" goto cmd_test
@@ -92,6 +93,7 @@ if "%choice%"=="10" goto cmd_setup_venv
 if "%choice%"=="11" goto cmd_shell
 if "%choice%"=="12" goto cmd_check_syntax
 if "%choice%"=="13" goto cmd_firewall
+if "%choice%"=="14" goto cmd_push
 if "%choice%"=="0" goto cmd_exit
 
 echo.
@@ -143,6 +145,29 @@ if %ERRORLEVEL% EQU 0 (
 echo.
 pause
 goto main_menu
+
+:cmd_push
+cls
+echo ==============================================================================
+echo Menjalankan Push ke Server Gitea PT. KMH...
+echo Target: http://162.198.2.212:3000/ryan/KMH_IT_Assets.git (branch main)
+echo ==============================================================================
+echo.
+echo (Jika diminta otentikasi, masukkan Username dan Password akun Gitea Anda)
+echo.
+git push -u origin main
+echo.
+if %ERRORLEVEL% EQU 0 (
+    echo ==============================================================================
+    echo [SUKSES] Seluruh perubahan proyek berhasil di-push ke Gitea!
+    echo ==============================================================================
+) else (
+    echo [PERHATIAN] Git push selesai dengan kode: %ERRORLEVEL%.
+)
+echo.
+pause
+goto main_menu
+
 
 
 :cmd_test
