@@ -735,6 +735,7 @@ def status_aset_export_pdf(request):
     if search_query:
         units = units.filter(
             Q(unit_code__icontains=search_query) |
+            Q(serial_number__icontains=search_query) |
             Q(asset__name__icontains=search_query) |
             Q(assigned_to__name__icontains=search_query) |
             Q(assigned_to__nik__icontains=search_query) |
@@ -1333,7 +1334,8 @@ def unit_history_export_pdf(request, unit_id):
     total_data = len(logs)
     info_data = [
         [Paragraph('Nama Aset', info_style), Paragraph(f': {unit.asset.name}', info_bold), Paragraph('Total Kejadian', info_style), Paragraph(f': {total_data} riwayat', info_bold)],
-        [Paragraph('Kode Unit', info_style), Paragraph(f': {unit.unit_code}', info_bold), Paragraph('Tanggal Cetak', info_style), Paragraph(f': {tanggal_str}', info_bold)]
+        [Paragraph('Kode Unit', info_style), Paragraph(f': {unit.unit_code}', info_bold), Paragraph('Serial Number', info_style), Paragraph(f': {unit.serial_number or "-"}', info_bold)],
+        [Paragraph('Tanggal Cetak', info_style), Paragraph(f': {tanggal_str}', info_bold), Paragraph('Status Saat Ini', info_style), Paragraph(f': {unit.get_status_display()}', info_bold)]
     ]
     
     info_table = Table(info_data, colWidths=[page_width*0.15, page_width*0.35, page_width*0.18, page_width*0.32])
@@ -1526,16 +1528,16 @@ def asset_units_export_pdf(request, asset_id):
     is_network = 'Network' in asset.category.name
     
     if is_network:
-        table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('STATUS', header_cell), Paragraph('LOKASI (AREA)', header_cell)]
+        table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('SERIAL NUMBER', header_cell), Paragraph('STATUS', header_cell), Paragraph('LOKASI (AREA)', header_cell)]
     else:
-        table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('STATUS', header_cell), Paragraph('DIPEGANG OLEH', header_cell)]
+        table_header = [Paragraph('NO', header_cell), Paragraph('KODE UNIT', header_cell), Paragraph('SERIAL NUMBER', header_cell), Paragraph('STATUS', header_cell), Paragraph('DIPEGANG OLEH', header_cell)]
         
-    col_widths = [page_width*0.08, page_width*0.25, page_width*0.25, page_width*0.42]
+    col_widths = [page_width*0.07, page_width*0.23, page_width*0.22, page_width*0.18, page_width*0.30]
         
     table_data = [table_header]
     
     if total_data == 0:
-        table_data.append([Paragraph('Belum ada unit untuk aset ini.', cell_center), '', '', ''])
+        table_data.append([Paragraph('Belum ada unit untuk aset ini.', cell_center), '', '', '', ''])
         unit_table = Table(table_data, colWidths=col_widths, repeatRows=1)
         table_style = [
             ('BACKGROUND', (0, 0), (-1, 0), navy),
@@ -1566,6 +1568,7 @@ def asset_units_export_pdf(request, asset_id):
             row = [
                 Paragraph(str(idx), cell_center), 
                 Paragraph(unit.unit_code, cell_bold_style), 
+                Paragraph(unit.serial_number or '-', cell_center),
                 Paragraph(unit.get_status_display(), cell_center), 
                 holder_info
             ]

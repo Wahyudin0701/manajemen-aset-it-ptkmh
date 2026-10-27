@@ -86,6 +86,9 @@
                     <td class="p-4 text-gray-500 font-medium text-center">{{ forloop.counter }}</td>
                     <td class="p-4">
                         <a href="{% url 'unit_history' unit.id %}" class="font-bold text-gray-900 hover:text-kerinci transition-colors inline-block w-max">{{ unit.unit_code }}</a>
+                        {% if unit.serial_number %}
+                        <p class="text-[11px] text-gray-400 font-mono">S/N: {{ unit.serial_number }}</p>
+                        {% endif %}
                     </td>
                     <td class="p-4">
                         <a href="{% url 'asset_units' unit.asset.id %}" class="block group">
@@ -94,7 +97,7 @@
                         </a>
                     </td>
                     <td class="p-4 text-center">
-                        <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" class="hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-kerinci focus:ring-offset-1 rounded-md" title="Klik untuk ubah status">
+                        <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}', '{{ unit.serial_number|default_if_none:""|escapejs }}')" class="hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-kerinci focus:ring-offset-1 rounded-md" title="Klik untuk ubah status">
                             {% if unit.status == 'tersedia' %}
                                 <span style="display:inline-flex;align-items:center;gap:4px;" class="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Tersedia <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></span>
                             {% elif unit.status == 'digunakan' %}
@@ -150,6 +153,7 @@
     <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
         <h3 class="text-xl font-bold text-gray-900 mb-4">Update Status Unit</h3>
         <p class="text-sm text-gray-500 mb-1">Kode Unit: <strong id="su_code" class="text-gray-900"></strong></p>
+        <p id="su_sn_info" class="text-sm text-gray-500 mb-1 hidden">Serial Number: <strong id="su_sn" class="text-gray-900 font-mono"></strong></p>
         <p id="su_assigned_info" class="text-sm text-gray-500 mb-4 hidden">Dipegang Oleh: <strong id="su_assigned_name" class="text-gray-900"></strong></p>
         <form id="statusUnitForm" method="POST" class="space-y-4">
             {% csrf_token %}
@@ -206,9 +210,18 @@
 
 <script>
     // JS for status modal
-    function openStatusModal(id, fullCode, status, assignedTo, categoryName, area, location) {
+    function openStatusModal(id, fullCode, status, assignedTo, categoryName, area, location, serialNumber) {
         document.getElementById('statusUnitForm').action = '/unit/' + id + '/status/';
         document.getElementById('su_code').innerText = fullCode;
+
+        const snInfo = document.getElementById('su_sn_info');
+        const snText = document.getElementById('su_sn');
+        if (serialNumber && serialNumber !== 'None' && serialNumber !== '') {
+            snText.innerText = serialNumber;
+            snInfo.classList.remove('hidden');
+        } else {
+            snInfo.classList.add('hidden');
+        }
         
         const assignedInfo = document.getElementById('su_assigned_info');
         const assignedName = document.getElementById('su_assigned_name');

@@ -108,6 +108,7 @@ class AssetUnit(models.Model):
     id_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='units', verbose_name="Jenis Aset")
     unit_code = models.CharField(max_length=60, unique=True, verbose_name="Kode Unit")
+    serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="Serial Number")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='tersedia', verbose_name="Status")
     assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='held_units', verbose_name="Pengguna Aset (PIC)")
     area = models.CharField(max_length=50, choices=AREA_CHOICES, blank=True, null=True, verbose_name="Area Pemasangan")

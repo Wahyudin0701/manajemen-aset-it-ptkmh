@@ -240,16 +240,16 @@ def status_aset_export_excel(request):
     left_align = Alignment(horizontal="left", vertical="center")
     border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
     
-    ws.merge_cells('A1:F1')
+    ws.merge_cells('A1:G1')
     ws['A1'] = "LAPORAN STATUS UNIT ASET"
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = center_align
     
-    ws.merge_cells('A2:F2')
+    ws.merge_cells('A2:G2')
     ws['A2'] = f"Kategori: {title_label}"
     ws['A2'].alignment = center_align
     
-    headers = ['No', 'Kode Unit', 'Nama Aset', 'Area', 'Status', 'Lokasi']
+    headers = ['No', 'Kode Unit', 'Serial Number', 'Nama Aset', 'Area', 'Status', 'Lokasi']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -265,6 +265,7 @@ def status_aset_export_excel(request):
         data = [
             idx,
             u.unit_code,
+            u.serial_number or '-',
             u.asset.name if u.asset else '-',
             u.area or '-',
             status_map.get(u.status, u.status),
@@ -274,12 +275,12 @@ def status_aset_export_excel(request):
         for col_num, cell_value in enumerate(data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.border = border
-            if col_num in [1, 2, 5]:
+            if col_num in [1, 2, 3, 6]:
                 cell.alignment = center_align
             else:
                 cell.alignment = left_align
                 
-    for col, width in zip(['A','B','C','D','E','F'], [5, 15, 30, 20, 15, 30]):
+    for col, width in zip(['A','B','C','D','E','F','G'], [5, 15, 18, 30, 20, 15, 30]):
         ws.column_dimensions[col].width = width
         
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -440,7 +441,8 @@ def unit_history_export_excel(request, unit_id):
     ws['A1'].alignment = center_align
     
     ws.merge_cells('A2:E2')
-    ws['A2'] = f"{unit.unit_code} - {unit.asset.name}"
+    sn_label = f" (S/N: {unit.serial_number})" if unit.serial_number else ""
+    ws['A2'] = f"{unit.unit_code}{sn_label} - {unit.asset.name}"
     ws['A2'].alignment = center_align
     
     headers = ['No', 'Tanggal', 'Aksi', 'Keterangan', 'Pihak Terkait']
@@ -521,16 +523,16 @@ def asset_units_export_excel(request, asset_id):
     left_align = Alignment(horizontal="left", vertical="center")
     border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
     
-    ws.merge_cells('A1:F1')
+    ws.merge_cells('A1:G1')
     ws['A1'] = "LAPORAN DAFTAR UNIT ASET"
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = center_align
     
-    ws.merge_cells('A2:F2')
+    ws.merge_cells('A2:G2')
     ws['A2'] = f"{asset.name}"
     ws['A2'].alignment = center_align
     
-    headers = ['No', 'Kode Unit', 'Area', 'Status', 'Lokasi/Pengguna', '-']
+    headers = ['No', 'Kode Unit', 'Serial Number', 'Area', 'Status', 'Lokasi/Pengguna', 'Lokasi Spesifik']
     for col_num, header_title in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col_num, value=header_title)
         cell.font = header_font
@@ -554,6 +556,7 @@ def asset_units_export_excel(request, asset_id):
         data = [
             idx,
             u.unit_code,
+            u.serial_number or '-',
             u.area or '-',
             status_map.get(u.status, u.status),
             lokasi,
@@ -563,12 +566,12 @@ def asset_units_export_excel(request, asset_id):
         for col_num, cell_value in enumerate(data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.border = border
-            if col_num in [1, 2, 4]:
+            if col_num in [1, 2, 3, 5]:
                 cell.alignment = center_align
             else:
                 cell.alignment = left_align
                 
-    for col, width in zip(['A','B','C','D','E','F'], [5, 15, 20, 15, 30, 30]):
+    for col, width in zip(['A','B','C','D','E','F','G'], [5, 15, 18, 20, 15, 30, 30]):
         ws.column_dimensions[col].width = width
         
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

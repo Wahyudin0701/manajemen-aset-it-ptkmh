@@ -21,9 +21,9 @@ class AssetAdmin(admin.ModelAdmin):
 
 @admin.register(AssetUnit)
 class AssetUnitAdmin(admin.ModelAdmin):
-    list_display = ('unit_code', 'asset', 'status', 'assigned_to')
+    list_display = ('unit_code', 'serial_number', 'asset', 'status', 'assigned_to')
     list_filter = ('status',)
-    search_fields = ('unit_code', 'asset__name')
+    search_fields = ('unit_code', 'serial_number', 'asset__name')
 
 @admin.register(AssetAssignment)
 class AssetAssignmentAdmin(admin.ModelAdmin):

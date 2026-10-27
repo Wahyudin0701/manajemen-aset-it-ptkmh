@@ -162,6 +162,7 @@ def unit_add(request, asset_id):
     if request.method == 'POST':
         asset = get_object_or_404(Asset, id=asset_id)
         suffix = request.POST.get('unit_code_suffix', '').strip()
+        serial_number = request.POST.get('serial_number', '').strip()
         status = 'tersedia'
 
         if suffix:
@@ -169,9 +170,19 @@ def unit_add(request, asset_id):
             if AssetUnit.objects.filter(unit_code=unit_code).exists():
                 if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
                     return JsonResponse({'status': 'error', 'message': f'Kode Unit "{unit_code}" sudah terdaftar di sistem!'}, status=400)
+                messages.error(request, f'Kode Unit "{unit_code}" sudah terdaftar di sistem!')
+                return redirect('asset_units', asset_id=asset_id)
             else:
-                new_unit = AssetUnit.objects.create(asset=asset, unit_code=unit_code, status=status)
-                UnitLog.objects.create(unit=new_unit, action='created', notes="Ditambahkan ke Sistem")
+                new_unit = AssetUnit.objects.create(
+                    asset=asset,
+                    unit_code=unit_code,
+                    serial_number=serial_number or None,
+                    status=status
+                )
+                log_notes = "Ditambahkan ke Sistem"
+                if serial_number:
+                    log_notes += f" (S/N: {serial_number})"
+                UnitLog.objects.create(unit=new_unit, action='created', notes=log_notes)
 
                 asset.qty = asset.units.count()
                 asset.save()
@@ -186,7 +197,7 @@ def unit_add(request, asset_id):
 @login_required
 @operator_required
 def unit_edit(request, unit_id):
-    """Memperbarui informasi kode unit dan status operasionalnya."""
+    """Memperbarui informasi kode unit, nomor seri (serial number), dan status operasionalnya."""
     unit = get_object_or_404(AssetUnit, id=unit_id)
     old_status = unit.status
     old_assigned = unit.assigned_to
@@ -198,19 +209,33 @@ def unit_edit(request, unit_id):
         if AssetUnit.objects.exclude(id=unit.id).filter(unit_code=new_unit_code).exists():
             if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'status': 'error', 'message': f'Kode Unit "{new_unit_code}" sudah digunakan oleh unit lain!'}, status=400)
+            messages.error(request, f'Kode Unit "{new_unit_code}" sudah digunakan oleh unit lain!')
+            return redirect('asset_units', asset_id=unit.asset.id)
 
+        old_code = unit.unit_code
         unit.unit_code = new_unit_code
-        new_status = request.POST.get('status')
-        unit.status = new_status
 
-        if new_status in ['tersedia', 'pensiun']:
-            unit.assigned_to = None
+        old_sn = unit.serial_number or ''
+        new_sn = request.POST.get('serial_number', '').strip()
+        unit.serial_number = new_sn or None
+
+        new_status = request.POST.get('status')
+        if new_status:
+            unit.status = new_status
+            if new_status in ['tersedia', 'pensiun']:
+                unit.assigned_to = None
 
         unit.save()
         new_assigned = unit.assigned_to
 
+        changes = []
+        if old_code != new_unit_code:
+            changes.append(f"Kode unit diubah dari {old_code} menjadi {new_unit_code}")
+        if old_sn != (new_sn or ''):
+            changes.append(f"Serial Number diubah dari '{old_sn or '-'}' menjadi '{new_sn or '-'}'")
+
         notes = request.POST.get('notes', '')
-        if old_status != new_status or old_assigned != new_assigned:
+        if new_status and (old_status != new_status or old_assigned != new_assigned):
             if old_status == 'digunakan' and new_status == 'tersedia':
                 UnitLog.objects.create(unit=unit, action='returned', employee=old_assigned, notes=notes or "Dikembalikan ke gudang")
             elif old_status == 'tersedia' and new_status == 'digunakan':
@@ -230,7 +255,12 @@ def unit_edit(request, unit_id):
                 UnitLog.objects.create(unit=unit, action='other', notes=notes or f"Status dipulihkan dari pensiun menjadi {new_status}")
             else:
                 UnitLog.objects.create(unit=unit, action='other', notes=notes or f"Status diubah dari {old_status} menjadi {new_status}")
+            if changes:
+                UnitLog.objects.create(unit=unit, action='other', notes="; ".join(changes))
+        elif changes:
+            UnitLog.objects.create(unit=unit, action='other', notes="; ".join(changes))
 
+        messages.success(request, f"Unit {unit.unit_code} berhasil diperbarui.")
         if request.headers.get('Accept') == 'application/json' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'status': 'success'})
 

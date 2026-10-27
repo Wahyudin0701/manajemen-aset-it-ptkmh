@@ -113,6 +113,9 @@
                         <a href="{% url 'asset_units' log.unit.asset.id %}" class="block group">
                             <p class="font-medium text-gray-800 group-hover:text-kerinci transition-colors">{{ log.unit.asset.name }}</p>
                             <p class="text-xs text-kerinci mt-0.5 font-bold group-hover:underline">{{ log.unit.unit_code }}</p>
+                            {% if log.unit.serial_number %}
+                            <p class="text-[10px] text-gray-400 font-mono">S/N: {{ log.unit.serial_number }}</p>
+                            {% endif %}
                         </a>
                     </td>
                     {% if tab == 'handover' %}
@@ -236,7 +239,7 @@
                     {% for group in asset_groups %}
                         <optgroup label="{{ group.grouper.name }}">
                             {% for unit in group.list %}
-                                <option value="{{ unit.id }}">{{ unit.unit_code }}</option>
+                                <option value="{{ unit.id }}">{{ unit.unit_code }}{% if unit.serial_number %} (S/N: {{ unit.serial_number }}){% endif %}</option>
                             {% endfor %}
                         </optgroup>
                     {% endfor %}
@@ -250,7 +253,7 @@
                 <select id="unit_used" name="unit_used" onchange="onUsedUnitChange()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
                     <option value="">-- Pilih unit yang sedang digunakan --</option>
                     {% for unit in used_units %}
-                        <option value="{{ unit.id }}" data-holder-id="{{ unit.assigned_to.id }}" data-holder="{{ unit.assigned_to.name }}" data-holder-nik="{{ unit.assigned_to.nik }}">{{ unit.unit_code }} — {{ unit.asset.name }} ({{ unit.assigned_to.name }})</option>
+                        <option value="{{ unit.id }}" data-holder-id="{{ unit.assigned_to.id }}" data-holder="{{ unit.assigned_to.name }}" data-holder-nik="{{ unit.assigned_to.nik }}">{{ unit.unit_code }}{% if unit.serial_number %} [S/N: {{ unit.serial_number }}]{% endif %} — {{ unit.asset.name }} ({{ unit.assigned_to.name }})</option>
                     {% endfor %}
                 </select>
                 <p class="text-xs text-gray-400 mt-1">Hanya unit berstatus "Digunakan"</p>

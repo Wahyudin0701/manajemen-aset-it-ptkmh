@@ -874,5 +874,154 @@ class ConsumableModuleTests(TestCase):
         self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
 
 
+class AssetUnitSerialNumberTests(TestCase):
+    """Pengujian komprehensif fitur Serial Number pada unit aset (Aset Karyawan & Network)."""
 
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_superuser(username='admin_sn', password='password123', email='admin@sn.com')
+        self.client.login(username='admin_sn', password='password123')
 
+        self.cat_karyawan = Category.objects.create(name="Aset Karyawan")
+        self.cat_network = Category.objects.create(name="Aset Network")
+
+        self.asset_karyawan = Asset.objects.create(
+            category=self.cat_karyawan,
+            asset_code="NB-ACER",
+            name="Laptop Acer Legion",
+            brand="Acer",
+            uom="Unit",
+            qty=0
+        )
+
+        self.asset_network = Asset.objects.create(
+            category=self.cat_network,
+            asset_code="SW-CISCO",
+            name="Cisco Catalyst 2960",
+            brand="Cisco",
+            uom="Unit",
+            qty=0
+        )
+
+    def test_add_unit_karyawan_with_serial_number(self):
+        """Admin dapat menambahkan unit Aset Karyawan dengan Serial Number."""
+        response = self.client.post(
+            reverse('unit_add', kwargs={'asset_id': self.asset_karyawan.id}),
+            data={
+                'unit_code_suffix': '001',
+                'serial_number': 'SN-ACER-998877',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        unit = AssetUnit.objects.filter(unit_code="NB-ACER-001").first()
+        self.assertIsNotNone(unit)
+        self.assertEqual(unit.serial_number, "SN-ACER-998877")
+        self.assertEqual(unit.status, 'tersedia')
+
+        # Memastikan log awal mencatat S/N
+        log = unit.logs.filter(action='created').first()
+        self.assertIsNotNone(log)
+        self.assertIn("SN-ACER-998877", log.notes)
+
+    def test_add_unit_network_with_serial_number(self):
+        """Admin dapat menambahkan unit Aset Network dengan Serial Number."""
+        response = self.client.post(
+            reverse('unit_add', kwargs={'asset_id': self.asset_network.id}),
+            data={
+                'unit_code_suffix': '001',
+                'serial_number': 'SN-CSCO-2960-X',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        unit = AssetUnit.objects.filter(unit_code="SW-CISCO-001").first()
+        self.assertIsNotNone(unit)
+        self.assertEqual(unit.serial_number, "SN-CSCO-2960-X")
+
+    def test_add_unit_without_serial_number_remains_none(self):
+        """Menambahkan unit tanpa serial number tetap sukses dengan serial_number bernilai None."""
+        response = self.client.post(
+            reverse('unit_add', kwargs={'asset_id': self.asset_karyawan.id}),
+            data={
+                'unit_code_suffix': '002',
+                'serial_number': '',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        unit = AssetUnit.objects.filter(unit_code="NB-ACER-002").first()
+        self.assertIsNotNone(unit)
+        self.assertIsNone(unit.serial_number)
+
+    def test_edit_unit_serial_number(self):
+        """Admin dapat melihat dan memperbarui Serial Number pada unit aset."""
+        unit = AssetUnit.objects.create(
+            asset=self.asset_karyawan,
+            unit_code="NB-ACER-003",
+            serial_number="OLD-SN-1234",
+            status="tersedia"
+        )
+        response = self.client.post(
+            reverse('unit_edit', kwargs={'unit_id': unit.id}),
+            data={
+                'unit_code_suffix': '003',
+                'serial_number': 'NEW-SN-5678',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        unit.refresh_from_db()
+        self.assertEqual(unit.serial_number, "NEW-SN-5678")
+
+        # Log perubahan tercatat di UnitLog
+        change_log = unit.logs.filter(action='other').first()
+        self.assertIsNotNone(change_log)
+        self.assertIn("Serial Number diubah", change_log.notes)
+        self.assertIn("NEW-SN-5678", change_log.notes)
+
+    def test_unit_history_and_public_detail_render_serial_number(self):
+        """Halaman riwayat unit dan halaman publik QR menampilkan data Serial Number."""
+        unit = AssetUnit.objects.create(
+            asset=self.asset_karyawan,
+            unit_code="NB-ACER-004",
+            serial_number="SN-VIEW-TEST-999",
+            status="tersedia"
+        )
+
+        # Cek halaman riwayat
+        res_history = self.client.get(reverse('unit_history', kwargs={'unit_id': unit.id}))
+        self.assertEqual(res_history.status_code, 200)
+        self.assertContains(res_history, "SN-VIEW-TEST-999")
+
+        # Cek halaman publik detail QR
+        res_public = self.client.get(reverse('unit_public_detail', kwargs={'uuid': unit.id_uuid}))
+        self.assertEqual(res_public.status_code, 200)
+        self.assertContains(res_public, "SN-VIEW-TEST-999")
+
+    def test_search_unit_by_serial_number_in_status_aset(self):
+        """Pencarian unit berdasarkan Serial Number di menu Status Aset berfungsi dengan tepat."""
+        unit = AssetUnit.objects.create(
+            asset=self.asset_karyawan,
+            unit_code="NB-ACER-005",
+            serial_number="SN-SEARCH-UNIQUE-88",
+            status="tersedia"
+        )
+        res = self.client.get(reverse('status_aset_list'), {'q': 'SN-SEARCH-UNIQUE-88', 'tab': 'tersedia'})
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "NB-ACER-005")
+        self.assertContains(res, "SN-SEARCH-UNIQUE-88")
+
+    def test_export_units_with_serial_number(self):
+        """Export Excel dan PDF unit aset memproses data serial number tanpa error."""
+        AssetUnit.objects.create(
+            asset=self.asset_karyawan,
+            unit_code="NB-ACER-006",
+            serial_number="SN-EXPORT-1122",
+            status="tersedia"
+        )
+        res_excel = self.client.get(reverse('asset_units_export_excel', kwargs={'asset_id': self.asset_karyawan.id}))
+        self.assertEqual(res_excel.status_code, 200)
+
+        res_pdf = self.client.get(reverse('asset_units_export_pdf', kwargs={'asset_id': self.asset_karyawan.id}))
+        self.assertEqual(res_pdf.status_code, 200)

@@ -37,6 +37,7 @@ def status_aset_list(request):
     if search_query:
         units_qs = units_qs.filter(
             Q(unit_code__icontains=search_query) |
+            Q(serial_number__icontains=search_query) |
             Q(asset__name__icontains=search_query) |
             Q(assigned_to__name__icontains=search_query) |
             Q(assigned_to__nik__icontains=search_query) |

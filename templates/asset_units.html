@@ -77,11 +77,11 @@
                 <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
                     <th class="p-3 font-bold text-center w-16">No</th>
                     <th class="p-3 font-bold">Kode Unit</th>
-
+                    <th class="p-3 font-bold">Serial Number</th>
                     <th class="p-3 font-bold text-center">Status</th>
                     <th class="p-3 font-bold">{% if "Network" in asset.category.name %}Lokasi{% else %}Dipegang Oleh{% endif %}</th>
                     <th class="p-3 font-bold text-center w-24">QR Code</th>
-                    <th class="p-3 font-bold text-center w-32">Riwayat Unit</th>
+                    <th class="p-3 font-bold text-center w-32">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-sm divide-y divide-gray-200">
@@ -91,25 +91,32 @@
                     <td class="p-3">
                         <a href="{% url 'unit_history' unit.id %}" class="font-bold text-gray-900 hover:text-kerinci transition-colors inline-block w-max">{{ unit.unit_code }}</a>
                     </td>
+                    <td class="p-3">
+                        {% if unit.serial_number %}
+                            <span class="font-mono text-xs font-bold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">{{ unit.serial_number }}</span>
+                        {% else %}
+                            <span class="text-gray-300 text-xs italic">-</span>
+                        {% endif %}
+                    </td>
 
                     <td class="p-3 text-center">
                         {% if unit.status == 'tersedia' %}
-                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1 cursor-pointer">
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}', '{{ unit.serial_number|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1 cursor-pointer">
                                 Tersedia
                                 <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                         {% elif unit.status == 'digunakan' %}
-                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 cursor-pointer">
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}', '{{ unit.serial_number|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 cursor-pointer">
                                 Digunakan
                                 <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                         {% elif unit.status == 'rusak' %}
-                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 cursor-pointer">
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}', '{{ unit.serial_number|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 cursor-pointer">
                                 Maintenance
                                 <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                         {% else %}
-                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 cursor-pointer">
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}', '{{ unit.serial_number|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 cursor-pointer">
                                 {{ unit.get_status_display }}
                                 <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
@@ -137,6 +144,9 @@
                     </td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center items-center space-x-1">
+                            <button type="button" onclick="openEditUnitModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.serial_number|default_if_none:""|escapejs }}', '{{ asset.asset_code|escapejs }}')" class="inline-flex items-center justify-center p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit Unit (Kode / Serial Number)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
                             <a href="{% url 'unit_history' unit.id %}" class="inline-flex items-center justify-center p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Riwayat Unit">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </a>
@@ -167,7 +177,7 @@
                 <input type="text" value="{{ asset.asset_code }} - {{ asset.name }}" disabled class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed">
             </div>
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Kode Unit <span class="text-red-500">*</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Kode Unit <span class="text-red-500">*</span></label>
                 <div class="flex">
                     <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-100 text-gray-500 text-sm font-bold">
                         {{ asset.asset_code }}-
@@ -175,6 +185,10 @@
                     <input type="text" id="add_unit_code_suffix" name="unit_code_suffix" required pattern="\d+" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-none rounded-r-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white" placeholder="Contoh: 001">
                 </div>
                 <p id="add_error" class="text-red-500 text-xs mt-1 hidden font-bold"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Serial Number</label>
+                <input type="text" id="add_serial_number" name="serial_number" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white font-mono" placeholder="Masukkan nomor seri (S/N) unit...">
             </div>
 
             
@@ -190,12 +204,51 @@
     </div>
 </div>
 
+<!-- Modal Edit Unit -->
+<div id="editUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeEditUnitModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Unit Aset</h3>
+        <form id="editUnitForm" method="POST" class="space-y-4" onsubmit="submitEditUnit(event)">
+            {% csrf_token %}
+            <input type="hidden" id="edit_unit_id" name="unit_id">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Aset Induk</label>
+                <input type="text" value="{{ asset.asset_code }} - {{ asset.name }}" disabled class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Kode Unit <span class="text-red-500">*</span></label>
+                <div class="flex">
+                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-100 text-gray-500 text-sm font-bold">
+                        {{ asset.asset_code }}-
+                    </span>
+                    <input type="text" id="edit_unit_code_suffix" name="unit_code_suffix" required pattern="\d+" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-none rounded-r-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white" placeholder="Contoh: 001">
+                </div>
+                <p id="edit_error" class="text-red-500 text-xs mt-1 hidden font-bold"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Serial Number</label>
+                <input type="text" id="edit_serial_number" name="serial_number" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white font-mono" placeholder="Masukkan nomor seri (S/N) unit...">
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeEditUnitModal()" class="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-kerinci text-white font-bold rounded-lg text-sm shadow-sm hover:bg-kerinci/90 transition-colors flex items-center justify-center">
+                    <span id="edit_spinner" class="hidden mr-2">...</span>
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Update Status Unit -->
 <div id="statusUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeStatusUnitModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
         <h3 class="text-xl font-bold text-gray-900 mb-4">Update Status Unit</h3>
         <p class="text-sm text-gray-500 mb-1">Kode Unit: <strong id="su_code" class="text-gray-900"></strong></p>
+        <p id="su_sn_info" class="text-sm text-gray-500 mb-1 hidden">Serial Number: <strong id="su_sn" class="text-gray-900 font-mono"></strong></p>
         <p id="su_assigned_info" class="text-sm text-gray-500 mb-4 hidden">Dipegang Oleh: <strong id="su_assigned_name" class="text-gray-900"></strong></p>
         <form id="statusUnitForm" method="POST" class="space-y-4">
             {% csrf_token %}
@@ -331,6 +384,8 @@
 
     function openAddUnitModal() {
         document.getElementById('add_error').classList.add('hidden');
+        document.getElementById('add_unit_code_suffix').value = '';
+        document.getElementById('add_serial_number').value = '';
         document.getElementById('addUnitModal').classList.remove('hidden');
         setTimeout(() => {
             document.getElementById('add_unit_code_suffix').focus();
@@ -340,9 +395,80 @@
         document.getElementById('addUnitModal').classList.add('hidden');
     }
 
-    function openStatusModal(id, fullCode, status, assignedTo, categoryName, area, location) {
+    function openEditUnitModal(id, fullCode, serialNumber, assetCode) {
+        const form = document.getElementById('editUnitForm');
+        form.action = '/unit/' + id + '/edit/';
+        document.getElementById('edit_unit_id').value = id;
+
+        let suffix = fullCode;
+        if (fullCode.startsWith(assetCode + '-')) {
+            suffix = fullCode.slice((assetCode + '-').length);
+        } else if (fullCode.includes('-')) {
+            suffix = fullCode.split('-').pop();
+        }
+        document.getElementById('edit_unit_code_suffix').value = suffix;
+        document.getElementById('edit_serial_number').value = (serialNumber && serialNumber !== 'None') ? serialNumber : '';
+        document.getElementById('edit_error').classList.add('hidden');
+        document.getElementById('editUnitModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('edit_serial_number').focus();
+        }, 50);
+    }
+    function closeEditUnitModal() {
+        document.getElementById('editUnitModal').classList.add('hidden');
+    }
+
+    async function submitEditUnit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const spinner = document.getElementById('edit_spinner');
+        const errorText = document.getElementById('edit_error');
+
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+        errorText.classList.add('hidden');
+        errorText.innerText = '';
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                errorText.innerText = data.message || 'Terjadi kesalahan sistem.';
+                errorText.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        } catch (err) {
+            errorText.innerText = 'Koneksi terputus. Coba lagi.';
+            errorText.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+
+    function openStatusModal(id, fullCode, status, assignedTo, categoryName, area, location, serialNumber) {
         document.getElementById('statusUnitForm').action = '/unit/' + id + '/status/';
         document.getElementById('su_code').innerText = fullCode;
+
+        const snInfo = document.getElementById('su_sn_info');
+        const snText = document.getElementById('su_sn');
+        if (serialNumber && serialNumber !== 'None' && serialNumber !== '') {
+            snText.innerText = serialNumber;
+            snInfo.classList.remove('hidden');
+        } else {
+            snInfo.classList.add('hidden');
+        }
         
         const assignedInfo = document.getElementById('su_assigned_info');
         const assignedName = document.getElementById('su_assigned_name');

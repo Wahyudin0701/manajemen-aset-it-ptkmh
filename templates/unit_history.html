@@ -7,21 +7,27 @@
     <div>
         <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Riwayat Unit</p>
         <h2 class="text-3xl font-extrabold text-gray-900">{{ unit.unit_code }}</h2>
-        <p class="text-sm text-gray-500 mt-2">
-            Dari Aset: <a href="{% url 'asset_units' unit.asset.id %}" class="font-bold text-blue-600 hover:underline">{{ unit.asset.name }}</a>
-        </p>
+        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
+            <span>Dari Aset: <a href="{% url 'asset_units' unit.asset.id %}" class="font-bold text-blue-600 hover:underline">{{ unit.asset.name }}</a></span>
+            <span>&bull;</span>
+            <span>Serial Number: <strong class="font-mono text-gray-900">{{ unit.serial_number|default:"-" }}</strong></span>
+            <span>&bull;</span>
+            <span>Status: <strong class="uppercase text-xs px-2 py-0.5 rounded {% if unit.status == 'tersedia' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif unit.status == 'digunakan' %}bg-blue-50 text-blue-700 border border-blue-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">{{ unit.get_status_display }}</strong></span>
+        </div>
     </div>
     <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-        <a href="{% url 'asset_units' unit.asset.id %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-1 sm:flex-none">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            <span>Kembali</span>
-        </a>
+        <!-- 1. Tombol Edit Unit: Mobile baris atas kiri (flex-1), Desktop tengah (sm:order-2 sm:flex-none) -->
+        <button type="button" onclick="openEditUnitModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.serial_number|default_if_none:""|escapejs }}', '{{ unit.asset.asset_code|escapejs }}')" class="order-1 sm:order-2 bg-white border border-amber-300 text-amber-700 rounded-xl shadow-sm px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold hover:bg-amber-50 transition-colors flex items-center space-x-1.5 sm:space-x-2 justify-center text-center flex-1 sm:flex-none whitespace-nowrap">
+            <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <span>Edit Unit</span>
+        </button>
 
-        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
-            <button onclick="var d = document.getElementById('exportMenuHistory'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <!-- 2. Fitur Ekspor: Mobile baris atas kanan (flex-1), Desktop paling kanan (sm:order-3 sm:flex-none) -->
+        <div class="order-2 sm:order-3 relative inline-block flex-1 sm:flex-none w-auto">
+            <button onclick="var d = document.getElementById('exportMenuHistory'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-1.5 sm:space-x-2 justify-center whitespace-nowrap shadow-sm">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Ekspor Riwayat</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <div id="exportMenuHistory" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
                 <a href="{% url 'unit_history_export_pdf' unit.id %}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
@@ -35,20 +41,26 @@
                 </a>
             </div>
         </div>
+
+        <!-- 3. Tombol Kembali: Mobile baris bawah (w-full), Desktop paling kiri (sm:order-1 sm:w-auto) -->
+        <a href="{% url 'asset_units' unit.asset.id %}" class="order-3 sm:order-1 bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-none">
+            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Kembali</span>
+        </a>
     </div>
 </div>
 
 <!-- Komponen Terpasang (Configuration Items) -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 w-full mb-6">
-    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-        <div>
-            <h3 class="text-base font-extrabold text-gray-900 flex items-center space-x-2">
-                <svg class="w-5 h-5 text-kerinci" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
-                <span>Komponen Terpasang (Configuration Items)</span>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 w-full mb-6">
+    <div class="flex items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100">
+        <div class="min-w-0 flex-1">
+            <h3 class="text-sm sm:text-base font-extrabold text-gray-900 flex items-center space-x-2">
+                <svg class="w-5 h-5 text-kerinci shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                <span class="leading-snug">Komponen Terpasang <span class="text-gray-500 font-semibold text-xs sm:text-sm"><span class="hidden sm:inline">(Configuration Items)</span><span class="sm:hidden">(CI)</span></span></span>
             </h3>
-            <p class="text-xs text-gray-500 mt-0.5">Daftar komponen hardware, peripheral, dan modul yang aktif terpasang pada perangkat ini.</p>
+            <p class="text-[11px] sm:text-xs text-gray-500 mt-1 leading-relaxed">Daftar komponen hardware, peripheral, dan modul yang aktif terpasang pada perangkat ini.</p>
         </div>
-        <span class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">
+        <span class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200 whitespace-nowrap shrink-0 self-start sm:self-center mt-0.5 sm:mt-0">
             {{ unit.components.count }} Komponen
         </span>
     </div>
@@ -81,14 +93,14 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="p-6 text-center text-gray-400 text-xs italic bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+    <div class="py-6 px-4 text-center text-gray-400 text-xs italic bg-gray-50/50 rounded-xl border border-dashed border-gray-200 leading-relaxed">
         Belum ada komponen Configuration Item yang tercatat terpasang pada perangkat ini.
     </div>
     {% endif %}
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">
-    <h3 class="text-lg font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4">Timeline Kejadian</h3>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 w-full">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-6 sm:mb-8 border-b border-gray-100 pb-3 sm:pb-4">Timeline Kejadian</h3>
 
     <div class="relative border-l border-gray-200 ml-3 md:ml-4 space-y-8">
         {% for log in logs %}
@@ -156,6 +168,108 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- Modal Edit Unit -->
+<div id="editUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeEditUnitModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Unit Aset</h3>
+        <form id="editUnitForm" method="POST" class="space-y-4" onsubmit="submitEditUnit(event)">
+            {% csrf_token %}
+            <input type="hidden" id="edit_unit_id" name="unit_id">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Aset Induk</label>
+                <input type="text" value="{{ unit.asset.asset_code }} - {{ unit.asset.name }}" disabled class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Kode Unit <span class="text-red-500">*</span></label>
+                <div class="flex">
+                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-100 text-gray-500 text-sm font-bold">
+                        {{ unit.asset.asset_code }}-
+                    </span>
+                    <input type="text" id="edit_unit_code_suffix" name="unit_code_suffix" required pattern="\d+" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-none rounded-r-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white" placeholder="Contoh: 001">
+                </div>
+                <p id="edit_error" class="text-red-500 text-xs mt-1 hidden font-bold"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Serial Number</label>
+                <input type="text" id="edit_serial_number" name="serial_number" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white font-mono" placeholder="Masukkan nomor seri (S/N) unit...">
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeEditUnitModal()" class="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-kerinci text-white font-bold rounded-lg text-sm shadow-sm hover:bg-kerinci/90 transition-colors flex items-center justify-center">
+                    <span id="edit_spinner" class="hidden mr-2">...</span>
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditUnitModal(id, fullCode, serialNumber, assetCode) {
+        const form = document.getElementById('editUnitForm');
+        form.action = '/unit/' + id + '/edit/';
+        document.getElementById('edit_unit_id').value = id;
+
+        let suffix = fullCode;
+        if (fullCode.startsWith(assetCode + '-')) {
+            suffix = fullCode.slice((assetCode + '-').length);
+        } else if (fullCode.includes('-')) {
+            suffix = fullCode.split('-').pop();
+        }
+        document.getElementById('edit_unit_code_suffix').value = suffix;
+        document.getElementById('edit_serial_number').value = (serialNumber && serialNumber !== 'None') ? serialNumber : '';
+        document.getElementById('edit_error').classList.add('hidden');
+        document.getElementById('editUnitModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('edit_serial_number').focus();
+        }, 50);
+    }
+    function closeEditUnitModal() {
+        document.getElementById('editUnitModal').classList.add('hidden');
+    }
+
+    async function submitEditUnit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const spinner = document.getElementById('edit_spinner');
+        const errorText = document.getElementById('edit_error');
+
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+        errorText.classList.add('hidden');
+        errorText.innerText = '';
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                errorText.innerText = data.message || 'Terjadi kesalahan sistem.';
+                errorText.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        } catch (err) {
+            errorText.innerText = 'Koneksi terputus. Coba lagi.';
+            errorText.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+</script>
 {% endblock %}
 
 <script>
