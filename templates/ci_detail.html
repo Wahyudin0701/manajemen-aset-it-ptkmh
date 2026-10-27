@@ -28,8 +28,9 @@
 
     <!-- Header Actions -->
     <div class="flex items-center space-x-2">
-        <a href="{% url 'ci_list' %}" class="px-4 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
-            &larr; Kembali
+        <a href="{% url 'ci_list' %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors flex items-center space-x-2 justify-center">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Kembali</span>
         </a>
         {% if not is_read_only %}
         <button onclick="openEditModal()" class="px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-xl text-sm font-bold transition-colors flex items-center space-x-1.5">
