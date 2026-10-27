@@ -1,0 +1,16 @@
+{
+  "frontend/main.js": {
+    "file": "assets/main-Bjl9dGvB.js",
+    "name": "main",
+    "src": "frontend/main.js",
+    "isEntry": true,
+    "css": [
+      "style.css"
+    ]
+  },
+  "frontend/style.css": {
+    "file": "style.css",
+    "src": "frontend/style.css",
+    "isEntry": true
+  }
+}
