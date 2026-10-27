@@ -65,7 +65,7 @@ echo   [2] Jalankan Automated Test Suite (python manage.py test assets)
 echo   [3] Jalankan Test dengan Output Terperinci (Verbose -v 2)
 echo   [4] Jalankan Migrasi Database (python manage.py migrate)
 echo   [5] Buat Migrasi Baru (python manage.py makemigrations)
-echo   [6] Seed Data Awal ('Aset Karyawan', 'Aset Network', & Consumables)
+echo   [6] Seed Data Awal (Aset, Consumables, & Configuration Items)
 echo   [7] Setup Akun Superuser Administrator (setup_superuser)
 echo   [8] Build Aset Frontend / TailwindCSS (npm run build)
 echo   [9] Install / Update Dependensi Python (pip install -r requirements.txt)
@@ -224,6 +224,7 @@ echo ===========================================================================
 echo.
 python manage.py seed_initial_data
 python manage.py seed_consumables
+python manage.py seed_cis
 echo.
 pause
 goto main_menu
