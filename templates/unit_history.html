@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Riwayat Unit{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between items-start space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Riwayat Unit</p>
+        <h2 class="text-3xl font-extrabold text-gray-900">{{ unit.unit_code }}</h2>
+        <p class="text-sm text-gray-500 mt-2">
+            Dari Aset: <a href="{% url 'asset_units' unit.asset.id %}" class="font-bold text-blue-600 hover:underline">{{ unit.asset.name }}</a>
+        </p>
+    </div>
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
+              <button onclick="var d = document.getElementById('exportMenuHistory'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <span>Ekspor Riwayat</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div id="exportMenuHistory" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
+                  <a href="{% url 'unit_history_export_pdf' unit.id %}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      Format PDF
+                  </a>
+                  <div class="h-px bg-gray-100 mx-2"></div>
+                  <a href="{% url 'unit_history_export_excel' unit.id %}" class="flex items-center px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-b-xl font-bold transition-colors">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      Format Excel (.xlsx)
+                  </a>
+              </div>
+          </div>
+        <a href="{% url 'asset_units' unit.asset.id %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-1 sm:flex-none">
+            <span>Kembali</span>
+        </a>
+    </div>
+</div>
+
+<!-- Komponen Terpasang (Configuration Items) -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 w-full mb-6">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+        <div>
+            <h3 class="text-base font-extrabold text-gray-900 flex items-center space-x-2">
+                <svg class="w-5 h-5 text-kerinci" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                <span>Komponen Terpasang (Configuration Items)</span>
+            </h3>
+            <p class="text-xs text-gray-500 mt-0.5">Daftar komponen hardware, peripheral, dan modul yang aktif terpasang pada perangkat ini.</p>
+        </div>
+        <span class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">
+            {{ unit.components.count }} Komponen
+        </span>
+    </div>
+
+    {% if unit.components.all %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {% for comp in unit.components.all %}
+        <div class="bg-gray-50/70 hover:bg-gray-50 p-4 rounded-xl border border-gray-200/70 transition-colors flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                    <span class="font-mono text-xs font-black text-gray-800">{{ comp.ci_code }}</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-gray-600 border border-gray-200">
+                        {{ comp.get_category_display }}
+                    </span>
+                </div>
+                <h4 class="font-bold text-sm text-gray-900 leading-snug">{{ comp.name }}</h4>
+                <p class="text-xs text-gray-500 mt-0.5">{{ comp.brand|default:"-" }}{% if comp.model_series %} &bull; {{ comp.model_series }}{% endif %}</p>
+                {% if comp.serial_number %}
+                <p class="text-[11px] text-gray-400 font-mono mt-1">S/N: {{ comp.serial_number }}</p>
+                {% endif %}
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-gray-200/50 flex items-center justify-between text-xs">
+                <span class="font-bold text-emerald-700 text-[11px]">{{ comp.get_condition_display }}</span>
+                <a href="{% url 'ci_detail' comp.id %}" class="text-kerinci font-bold hover:underline inline-flex items-center space-x-1">
+                    <span>Lihat CI</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-6 text-center text-gray-400 text-xs italic bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+        Belum ada komponen Configuration Item yang tercatat terpasang pada perangkat ini.
+    </div>
+    {% endif %}
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">
+    <h3 class="text-lg font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4">Timeline Kejadian</h3>
+
+    <div class="relative border-l border-gray-200 ml-3 md:ml-4 space-y-8">
+        {% for log in logs %}
+        <div class="relative pl-8 md:pl-10">
+            <!-- Timeline Node (Icon) -->
+            <div class="absolute -left-4 top-1 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center
+                {% if log.action == 'created' %}bg-gray-200 text-gray-600
+                {% elif log.action == 'assigned' %}bg-blue-100 text-blue-600
+                {% elif log.action == 'returned' %}bg-emerald-100 text-emerald-600
+                {% elif log.action == 'maintenance_in' %}bg-red-100 text-red-600
+                {% elif log.action == 'maintenance_out' %}bg-emerald-100 text-emerald-600
+                {% elif log.action == 'mutation' %}bg-purple-100 text-purple-600
+                {% elif log.action == 'retired' %}bg-gray-800 text-white
+                {% else %}bg-gray-200 text-gray-600{% endif %}">
+                
+                {% if log.action == 'created' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                {% elif log.action == 'assigned' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                {% elif log.action == 'returned' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                {% elif log.action == 'maintenance_out' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                {% elif log.action == 'maintenance_in' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"></path></svg>
+                {% elif log.action == 'mutation' %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                {% else %}
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="pt-1.5 pb-2">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                    <h4 class="font-bold text-gray-900 text-base flex items-center space-x-2">
+                        <span>{{ log.get_action_display }}</span>
+                    </h4>
+                    <span class="text-xs font-bold text-gray-400 mt-1 md:mt-0">{{ log.timestamp|date:"d M Y, H:i" }}</span>
+                </div>
+                
+                {% if log.employee %}
+                <a href="{% url 'employee_detail' log.employee.id %}" class="flex items-center space-x-2 mb-2 group w-max">
+                    <div class="w-6 h-6 rounded-full bg-kerinci-light text-kerinci flex items-center justify-center font-bold text-[9px] uppercase transition-colors group-hover:bg-kerinci group-hover:text-white">{{ log.employee.name|make_list|first }}</div>
+                    <div>
+                        <p class="font-bold text-gray-700 text-xs transition-colors group-hover:text-kerinci">{{ log.employee.name }}</p>
+                    </div>
+                </a>
+                {% elif log.deleted_employee_name %}
+                <div class="flex items-center space-x-2 mb-2 w-max opacity-60">
+                    <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-[9px] uppercase">{{ log.deleted_employee_name|make_list|first }}</div>
+                    <div>
+                        <p class="font-bold text-gray-500 text-xs">{{ log.deleted_employee_name }} <span class="text-[10px] font-normal italic">(Dihapus)</span></p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if log.notes %}
+                <p class="text-sm text-gray-600 mt-1.5 leading-relaxed">{{ log.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="pl-8 text-gray-400 text-sm italic">Belum ada riwayat tercatat untuk unit ini.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+<script>
+document.addEventListener('click', function() {
+    var menu = document.getElementById('exportMenuHistory');
+    if (menu) menu.style.display = 'none';
+});
+</script>

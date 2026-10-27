@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Aset IT - Kerinci Hydropower</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dist/style.css' %}?v=2.1">
+    
+    <style>
+        body { background-color: #F8F9FA; }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-[#F8F9FA] font-sans antialiased text-gray-900 h-screen flex overflow-hidden">
+    
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/50 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 h-full flex flex-col fixed lg:static z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="h-20 ml-6 flex items-center justify-start border-b border-gray-200">
+            <!-- Logo -->
+            <img src="{% static 'img/main_logo.png' %}?v=6" alt="IT All Role Kerinci Hydropower" class="h-9 w-auto object-contain">
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors {% if request.path == '/' %}bg-kerinci text-white shadow-sm shadow-kerinci/30{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="font-semibold text-sm">Dashboard</span>
+            </a>
+            
+            <p class="text-xs font-bold text-gray-400 mt-6 mb-2 px-4">MANAJEMEN ASET</p>
+            <a href="{% url 'asset_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/aset/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="font-semibold text-sm">Daftar Aset</span>
+            </a>
+            <a href="{% url 'distribusi_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/distribusi/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <span class="font-semibold text-sm">Distribusi Aset</span>
+            </a>
+            <a href="{% url 'status_aset_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/status-aset/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="font-semibold text-sm">Status Aset</span>
+            </a>
+            <a href="{% url 'ci_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/ci/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                <span class="font-semibold text-sm">Configuration Item</span>
+            </a>
+            <a href="{% url 'consumable_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/consumable/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <span class="font-semibold text-sm">Consumable Item</span>
+            </a>
+            <a href="{% url 'employee_list' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/karyawan/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <span class="font-semibold text-sm">Data Karyawan</span>
+            </a>
+            
+            <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 mt-10">Pengaturan</p>
+            
+            {% if is_admin %}
+            <a href="{% url 'backup_database' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/backup/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                <span class="font-semibold text-sm">Backup Data</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'profile' %}" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors {% if '/profil/' in request.path %}bg-kerinci-light text-kerinci font-semibold{% else %}text-gray-500 hover:text-kerinci hover:bg-kerinci-light{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="font-semibold text-sm">Profil Saya</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-kerinci text-white rounded-full flex items-center justify-center font-bold text-xs">A</div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-800 truncate">{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Administrator{% endif %}</p>
+                    </div>
+                </div>
+                <form action="{% url 'logout' %}" method="POST" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors" title="Keluar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative min-w-0">
+        <!-- Topbar -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-8 justify-between z-10">
+            <div class="flex items-center space-x-3 w-full sm:w-auto">
+                <button onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-kerinci transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="flex items-center">
+                    <h2 class="font-bold text-gray-800 text-lg truncate max-w-[150px] sm:max-w-none">{% block page_title %}Dashboard{% endblock %}</h2>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative" id="profileDropdownContainer">
+                    <button type="button" onclick="toggleProfileDropdown()" class="flex items-center space-x-3 text-left focus:outline-none p-1.5 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div class="w-10 h-10 bg-kerinci text-white rounded-full flex items-center justify-center font-bold shadow-sm shadow-kerinci/30 shrink-0">
+                            {% if request.user.is_authenticated %}{{ request.user.first_name|default:request.user.username|first|upper }}{% else %}A{% endif %}
+                        </div>
+                        <div class="hidden sm:block">
+                            <p class="text-sm font-bold text-gray-800">{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Pengguna{% endif %}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                                {% if is_admin %}Administrator{% elif is_operator %}Teknisi IT{% elif is_read_only %}Auditor / Viewer{% else %}{{ user_role|title }}{% endif %}
+                            </p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 py-2 z-50 transform opacity-0 scale-95 transition-all origin-top-right">
+                        <a href="{% url 'profile' %}" class="flex items-center space-x-3 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <span>Profil Saya</span>
+                        </a>
+                        <div class="h-px bg-gray-100 my-1"></div>
+                        <form action="{% url 'logout' %}" method="POST" class="w-full">
+                            {% csrf_token %}
+                            <button type="submit" class="flex items-center space-x-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors w-full text-left">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                <span>Keluar Sistem</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 overflow-y-auto" id="main-content">
+            <div class="p-4 md:p-8 max-w-[1400px] mx-auto w-full min-w-0">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Toasts -->
+    {% if messages %}
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3">
+        {% for message in messages %}
+        <div class="toast-item relative overflow-hidden bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl p-4 flex items-start gap-3 w-[350px] transform translate-y-10 opacity-0 transition-all duration-300">
+            <!-- Icon -->
+            <div class="flex-shrink-0 mt-0.5">
+                {% if message.tags == 'success' %}
+                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% elif message.tags == 'error' %}
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% else %}
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% endif %}
+            </div>
+            <!-- Message -->
+            <div class="flex-1">
+                <p class="text-sm font-bold text-gray-900">{{ message }}</p>
+            </div>
+            <!-- Close Btn -->
+            <button onclick="this.closest('.toast-item').remove()" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <!-- Progress bar -->
+            <div class="absolute bottom-0 right-0 h-1 bg-emerald-500 toast-progress" style="width: 100%;"></div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <style>
+        @keyframes toastProgress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .toast-progress {
+            animation: toastProgress 4s linear forwards;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.toast-item');
+            toasts.forEach((toast, index) => {
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-10', 'opacity-0');
+                    toast.classList.add('translate-y-0', 'opacity-100');
+                }, index * 150);
+                
+                const svg = toast.querySelector('svg');
+                const progress = toast.querySelector('.toast-progress');
+                if (svg.classList.contains('text-red-500')) {
+                    progress.classList.remove('bg-emerald-500');
+                    progress.classList.add('bg-red-500');
+                } else if (svg.classList.contains('text-blue-500')) {
+                    progress.classList.remove('bg-emerald-500');
+                    progress.classList.add('bg-blue-500');
+                }
+                
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('translate-y-5', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            });
+        });
+    </script>
+    {% endif %}
+
+
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            }
+        }
+    </script>
+
+    <script>
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => {
+                    dropdown.classList.remove('opacity-0', 'scale-95');
+                    dropdown.classList.add('opacity-100', 'scale-100');
+                }, 10);
+            } else {
+                dropdown.classList.remove('opacity-100', 'scale-100');
+                dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    dropdown.classList.add('hidden');
+                }, 150);
+            }
+        }
+        
+        document.addEventListener('click', function(event) {
+            const container = document.getElementById('profileDropdownContainer');
+            const dropdown = document.getElementById('profileDropdown');
+            if (container && !container.contains(event.target)) {
+                if (!dropdown.classList.contains('hidden')) {
+                    dropdown.classList.remove('opacity-100', 'scale-100');
+                    dropdown.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        dropdown.classList.add('hidden');
+                    }, 150);
+                }
+            }
+        });
+        
+        function openGuideModal() {
+            const modal = document.getElementById('guideModal');
+            const overlay = document.getElementById('guideOverlay');
+            const card = document.getElementById('guideCard');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                card.classList.remove('scale-95', 'opacity-0', 'translate-y-4');
+                card.classList.add('scale-100', 'opacity-100', 'translate-y-0');
+            }, 10);
+        }
+
+        function closeGuideModal() {
+            const modal = document.getElementById('guideModal');
+            const overlay = document.getElementById('guideOverlay');
+            const card = document.getElementById('guideCard');
+            
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            card.classList.remove('scale-100', 'opacity-100', 'translate-y-0');
+            card.classList.add('scale-95', 'opacity-0', 'translate-y-4');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    </script>
+
+    <!-- Modal Panduan (Global) -->
+    <div id="guideModal" class="fixed inset-0 hidden flex items-center justify-center p-4 sm:p-0" style="z-index: 9999;">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0" id="guideOverlay" onclick="closeGuideModal()"></div>
+        
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 transform transition-all duration-300 scale-95 opacity-0 translate-y-4 max-h-[90vh] flex flex-col overflow-hidden" id="guideCard">
+            <!-- Header Modal -->
+            <div class="flex justify-between items-center shrink-0 border-b border-gray-100 p-4 sm:p-6 bg-white">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold text-gray-900 leading-tight">Panduan Halaman</h3>
+                        <p class="text-sm text-gray-500 font-medium">{% block page_title_guide %}{% endblock %}</p>
+                    </div>
+                </div>
+                <button onclick="closeGuideModal()" class="text-gray-400 hover:bg-gray-100 hover:text-gray-600 p-2 rounded-xl transition-colors shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Isi Modal -->
+            <div class="overflow-y-auto flex-1 min-h-0 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed scrollbar-hide bg-white">
+                {% block page_guide_content %}
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="text-gray-500 font-medium">Belum ada panduan khusus untuk halaman ini.</p>
+                </div>
+                {% endblock %}
+            </div>
+            
+            <!-- Footer Modal -->
+            <div class="p-4 sm:p-6 border-t border-gray-100 flex justify-end shrink-0 bg-gray-50/50">
+                <button onclick="closeGuideModal()" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

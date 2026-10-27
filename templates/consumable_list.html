@@ -1,0 +1,905 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Consumable Item & Persediaan IT{% endblock %}
+
+{% block page_title_guide %}Panduan Modul Consumable Item{% endblock %}
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Modul <b>Consumable Item</b> dirancang khusus untuk mengelola logistik barang habis pakai yang digunakan oleh tim IT Network & Security serta Technical Support PT. Kerinci Hydropower.</p>
+    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <h4 class="font-bold text-emerald-800 text-xs uppercase tracking-wider mb-1">Prinsip Audit & Integritas Stok</h4>
+        <p class="text-xs text-emerald-700">Saldo stok tidak dapat diedit sembarangan. Setiap perubahan stok dicatat secara mutlak melalui transaksi atomik: <b>Barang Masuk</b>, <b>Barang Keluar</b>, atau <b>Stock Opname</b> pada buku besar transaksi (stock ledger).</p>
+    </div>
+    <ul class="list-disc pl-5 space-y-1 text-xs text-gray-600">
+        <li><b>Barang Masuk:</b> Mencatat penambahan stok dari pengadaan/pembelian, transfer, atau retur sisa teknisi.</li>
+        <li><b>Barang Keluar:</b> Mencatat konsumsi material oleh teknisi dengan keterkaitan ke tiket support, work order, atau unit aset terkait.</li>
+        <li><b>Stock Opname:</b> Penyesuaian fisik berkala dengan alasan audit yang wajib diisi.</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header & Action Buttons -->
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset &bull; Logistik Habis Pakai</p>
+        <div class="flex items-center space-x-3">
+            <h2 class="text-3xl font-extrabold text-gray-900">Consumable Item</h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Network & Support
+            </span>
+            <button onclick="openGuideModal()" class="text-gray-400 hover:text-kerinci p-1 rounded-lg hover:bg-gray-100 transition-colors" title="Buka Panduan Modul">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Pengelolaan persediaan kabel, konektor RJ45, thermal paste, cable ties, fastener, dan perlengkapan teknisi IT.</p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        {% if not is_read_only %}
+        <button onclick="openModalBarangMasuk()" class="bg-blue-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Barang Masuk</span>
+        </button>
+        <button onclick="openModalBarangKeluar()" class="bg-amber-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-amber-500/20 hover:bg-amber-700 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Barang Keluar</span>
+        </button>
+        <button onclick="openModalOpname()" class="bg-purple-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-purple-500/20 hover:bg-purple-700 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            <span>Stock Opname</span>
+        </button>
+        <button onclick="openCreateItemModal()" class="bg-kerinci text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>+ Tambah Item</span>
+        </button>
+        {% endif %}
+
+        <!-- Export Dropdown / Buttons -->
+        <div class="flex items-center space-x-1 pl-1">
+            <a href="{% url 'consumable_export_excel' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-emerald-700 transition-colors shadow-sm" title="Ekspor Excel">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </a>
+            <a href="{% url 'consumable_export_pdf' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" target="_blank" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-red-600 transition-colors shadow-sm" title="Ekspor PDF">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
+    <!-- Total Jenis Item -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Jenis</p>
+            <h3 class="text-2xl font-black text-gray-900">{{ counts.total }}</h3>
+            <p class="text-[10px] text-gray-400">Item Terdaftar</p>
+        </div>
+        <div class="w-10 h-10 bg-emerald-50 text-kerinci rounded-xl flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        </div>
+    </div>
+
+    <!-- Akumulasi Stok Fisik -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-0.5" title="Jumlah agregat kuantitas seluruh item">Akumulasi Stok</p>
+            <h3 class="text-2xl font-black text-blue-900">{{ counts.total_qty|floatformat:0 }}</h3>
+            <p class="text-[10px] text-blue-500" title="Agregat lintas satuan (pcs, meter, roll, dsb)">*Agregat kuantitas</p>
+        </div>
+        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+        </div>
+    </div>
+
+    <!-- Stok Tersedia Aman -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Stok Normal</p>
+            <h3 class="text-2xl font-black text-emerald-900">{{ counts.available }}</h3>
+            <p class="text-[10px] text-emerald-500">Di atas batas min</p>
+        </div>
+        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+    </div>
+
+    <!-- Stok Menipis -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Stok Menipis</p>
+            <h3 class="text-2xl font-black text-amber-900">{{ counts.low_stock }}</h3>
+            <p class="text-[10px] text-amber-500">Perlu reorder</p>
+        </div>
+        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+    </div>
+
+    <!-- Stok Habis -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between col-span-2 lg:col-span-1">
+        <div>
+            <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-0.5">Stok Habis</p>
+            <h3 class="text-2xl font-black text-red-900">{{ counts.out_of_stock }}</h3>
+            <p class="text-[10px] text-red-500">Saldo 0</p>
+        </div>
+        <div class="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+        </div>
+    </div>
+</div>
+
+<!-- Status Tabs -->
+<div class="flex space-x-2 mb-4 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
+    <a href="?status={% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if not status_filter %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Semua Item
+        <span class="ml-2 {% if not status_filter %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.total }}</span>
+    </a>
+    <a href="?status=available{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'available' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Stok Aman
+        <span class="ml-2 {% if status_filter == 'available' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.available }}</span>
+    </a>
+    <a href="?status=low_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'low_stock' %}border-amber-600 text-amber-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Stok Menipis
+        <span class="ml-2 {% if status_filter == 'low_stock' %}bg-amber-100 text-amber-700{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.low_stock }}</span>
+    </a>
+    <a href="?status=out_of_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'out_of_stock' %}border-red-600 text-red-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        Stok Habis
+        <span class="ml-2 {% if status_filter == 'out_of_stock' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.out_of_stock }}</span>
+    </a>
+</div>
+
+<!-- Filters & Search Bar -->
+<div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <form id="filterForm" method="GET" class="flex flex-wrap items-center gap-2 w-full">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <div class="relative flex-1 min-w-[240px]">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Cari kode barang, nama, merek, spesifikasi, lokasi..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+
+        <select name="category" onchange="this.form.submit()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
+            <option value="">Semua Kategori</option>
+            {% for cat_val, cat_label in categories %}
+            <option value="{{ cat_val }}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="location" onchange="this.form.submit()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
+            <option value="">Semua Lokasi</option>
+            {% for loc in locations %}
+            <option value="{{ loc }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
+            {% endfor %}
+        </select>
+
+        {% if search_query or category_filter or location_filter or status_filter %}
+        <a href="{% url 'consumable_list' %}" class="px-3.5 py-2.5 text-xs font-bold text-gray-500 hover:text-red-500 border border-gray-200 hover:border-red-200 rounded-xl bg-white transition-colors" title="Reset Semua Filter">
+            Reset
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Consumable Item Table Card -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[900px]">
+            <thead>
+                <tr class="bg-gray-50/75 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">Kode Item</th>
+                    <th class="py-3.5 px-4">Nama Barang & Merek</th>
+                    <th class="py-3.5 px-4">Kategori</th>
+                    <th class="py-3.5 px-4">Spesifikasi</th>
+                    <th class="py-3.5 px-4 text-center">Satuan</th>
+                    <th class="py-3.5 px-4 text-right">Stok Tersedia</th>
+                    <th class="py-3.5 px-4 text-right">Stok Min</th>
+                    <th class="py-3.5 px-4">Lokasi</th>
+                    <th class="py-3.5 px-4 text-center">Status</th>
+                    <th class="py-3.5 px-4 text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-sm">
+                {% for item in page_obj %}
+                <tr class="hover:bg-gray-50/80 transition-colors">
+                    <!-- Kode Item -->
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <a href="{% url 'consumable_detail' item.id %}" class="font-mono text-xs font-bold text-kerinci hover:underline">
+                            {{ item.item_code }}
+                        </a>
+                    </td>
+
+                    <!-- Nama Barang & Merek -->
+                    <td class="py-3.5 px-4">
+                        <div class="font-bold text-gray-900 leading-snug">
+                            <a href="{% url 'consumable_detail' item.id %}" class="hover:text-kerinci">
+                                {{ item.name }}
+                            </a>
+                        </div>
+                        {% if item.brand %}
+                        <div class="text-[11px] text-gray-400 font-medium">Merek: {{ item.brand }}</div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Kategori -->
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+                            {{ item.get_category_display|truncatewords:2 }}
+                        </span>
+                    </td>
+
+                    <!-- Spesifikasi -->
+                    <td class="py-3.5 px-4 text-xs text-gray-600 max-w-[220px]">
+                        <span class="line-clamp-2" title="{{ item.specification }}">{{ item.specification|default:"-" }}</span>
+                    </td>
+
+                    <!-- Satuan & Konversi -->
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <span class="font-semibold text-gray-700 text-xs">{{ item.base_unit }}</span>
+                        {% if item.purchase_unit %}
+                        <div class="text-[10px] text-gray-400" title="1 {{ item.purchase_unit }} = {{ item.conversion_rate }} {{ item.base_unit }}">
+                            1 {{ item.purchase_unit }} = {{ item.conversion_rate|floatformat:0 }} {{ item.base_unit }}
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Stok Tersedia -->
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        <span class="text-base font-extrabold {% if item.stock_status == 'out_of_stock' %}text-red-600{% elif item.stock_status == 'low_stock' %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                            {{ item.formatted_stock }}
+                        </span>
+                    </td>
+
+                    <!-- Stok Minimum -->
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap text-xs text-gray-500 font-medium">
+                        {{ item.formatted_minimum_stock }}
+                    </td>
+
+                    <!-- Lokasi -->
+                    <td class="py-3.5 px-4 whitespace-nowrap text-xs text-gray-600">
+                        <span class="inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            {{ item.location }}
+                        </span>
+                    </td>
+
+                    <!-- Status Stok Badge -->
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        {% if item.stock_status == 'out_of_stock' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
+                            Habis
+                        </span>
+                        {% elif item.stock_status == 'low_stock' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                            Menipis
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                            Tersedia
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Aksi -->
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <a href="{% url 'consumable_detail' item.id %}" class="p-1.5 text-gray-500 hover:text-kerinci hover:bg-gray-100 rounded-lg transition-colors" title="Buku Besar & Riwayat Lengkap">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </a>
+                            {% if not is_read_only %}
+                            <button onclick="openModalBarangMasukItem('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.base_unit }}', '{{ item.purchase_unit|default:'' }}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" title="Tambah Stok (Barang Masuk)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                            <button onclick="openModalBarangKeluarItem('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.base_unit }}', '{{ item.stock_available }}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors" title="Gunakan / Keluarkan Barang">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-3">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            </div>
+                            <h4 class="text-base font-bold text-gray-800">Tidak ada consumable item ditemukan</h4>
+                            <p class="text-xs text-gray-400 mt-1 max-w-sm">
+                                {% if search_query or category_filter or location_filter or status_filter %}
+                                Tidak ada data yang cocok dengan kriteria pencarian atau filter yang diterapkan.
+                                {% else %}
+                                Belum ada data barang habis pakai. Klik tombol "+ Tambah Item" di atas untuk mendaftarkan barang baru.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginasi -->
+    {% include 'components/pagination.html' %}
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 1: Tambah Consumable Item Baru -->
+<!-- ========================================================================= -->
+<div id="modalCreateItem" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-kerinci flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-base">Tambah Consumable Item Baru</h3>
+                    <p class="text-xs text-gray-500">Daftarkan jenis barang habis pakai ke katalog master persediaan.</p>
+                </div>
+            </div>
+            <button onclick="closeCreateItemModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_create' %}" method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Kode Barang -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Kode Barang <span class="text-gray-400 font-normal text-[10px]">(Opsional - auto-generated)</span>
+                    </label>
+                    <input type="text" name="item_code" placeholder="Misal: CNS-CAB-001" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci uppercase font-mono">
+                </div>
+
+                <!-- Kategori -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <select name="category" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white">
+                        {% for cat_val, cat_label in categories %}
+                        <option value="{{ cat_val }}">{{ cat_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Nama Barang & Merek -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Nama Barang <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="name" required placeholder="Contoh: Kabel UTP Cat6, Konektor RJ45" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Merek / Brand
+                    </label>
+                    <input type="text" name="brand" placeholder="Contoh: Belden, CommScope, Arctic, 3M" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci">
+                </div>
+            </div>
+
+            <!-- Spesifikasi Teknis -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Spesifikasi Teknis
+                </label>
+                <input type="text" name="specification" placeholder="Contoh: UTP Cat6 24AWG Solid Copper, Thermal Paste 5g 8.5W/mK" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci">
+            </div>
+
+            <!-- Satuan & Konversi -->
+            <div class="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200 space-y-3">
+                <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Satuan Kuantitas & Konversi</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Satuan Dasar (UoM) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="base_unit" required placeholder="pcs, meter, tube, roll" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        <span class="text-[10px] text-gray-400">Satuan terkecil pemakaian</span>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Satuan Pembelian
+                        </label>
+                        <input type="text" name="purchase_unit" placeholder="roll, box, pack, tube" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        <span class="text-[10px] text-gray-400">Satuan saat order/beli</span>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Faktor Konversi
+                        </label>
+                        <input type="number" step="0.01" min="0.01" name="conversion_rate" value="1.00" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white font-mono">
+                        <span class="text-[10px] text-gray-400">1 Beli = X Satuan Dasar</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stok & Lokasi -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Stok Awal Fisik
+                    </label>
+                    <input type="number" step="0.01" min="0" name="initial_stock" value="0" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci font-mono">
+                    <span class="text-[10px] text-gray-400">Dicatat terotorisasi ke buku besar</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Batas Stok Minimum
+                    </label>
+                    <input type="number" step="0.01" min="0" name="minimum_stock" value="10" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci font-mono">
+                    <span class="text-[10px] text-gray-400">Ambang batas peringatan</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Lokasi Penyimpanan
+                    </label>
+                    <select name="location" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        {% for loc in locations %}
+                        <option value="{{ loc }}" {% if loc == 'Gudang Induk (GI)' %}selected{% endif %}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Estimasi Harga Beli & Catatan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Estimasi Harga Beli Satuan (Rp)
+                    </label>
+                    <input type="number" step="100" min="0" name="last_purchase_price" value="0" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Catatan Tambahan
+                    </label>
+                    <input type="text" name="notes" placeholder="Keterangan peruntukan, rak, vendor langganan" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeCreateItemModal()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-kerinci text-white text-sm font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors">
+                    Simpan Master Item
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: Transaksi Barang Masuk -->
+<!-- ========================================================================= -->
+<div id="modalBarangMasuk" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-base">Penerimaan Barang Masuk</h3>
+                    <p class="text-xs text-gray-500">Mencatat penambahan stok dari pengadaan, restock, atau retur.</p>
+                </div>
+            </div>
+            <button onclick="closeModalBarangMasuk()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_in' %}" method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% csrf_token %}
+
+            <!-- Pilih Item -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Pilih Item Consumable <span class="text-red-500">*</span>
+                </label>
+                <select id="in_item_select" name="item_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                    <option value="">-- Pilih Barang --</option>
+                    {% for itm in selectable_items %}
+                    <option value="{{ itm.id }}" data-base="{{ itm.base_unit }}" data-purchase="{{ itm.purchase_unit|default:'' }}" data-conv="{{ itm.conversion_rate }}">
+                        {{ itm.item_code }} - {{ itm.name }} (Stok saat ini: {{ itm.formatted_stock }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Jumlah & Pilihan Satuan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Jumlah Masuk <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" step="0.01" min="0.01" name="quantity" required placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Satuan Transaksi
+                    </label>
+                    <select id="in_unit_type" name="unit_type" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                        <option value="base">Satuan Dasar</option>
+                        <option value="purchase">Satuan Pembelian (Jika ada)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sumber & Tanggal -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Sumber Barang
+                    </label>
+                    <select name="source_destination" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                        <option value="Pembelian / Pengadaan Baru">Pembelian / Pengadaan Baru</option>
+                        <option value="Pengembalian Sisa Proyek">Pengembalian Sisa Proyek / Teknisi</option>
+                        <option value="Transfer Antar Gudang">Transfer Antar Gudang</option>
+                        <option value="Hibah / Suplai Kantor Pusat">Hibah / Suplai Kantor Pusat</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Penerimaan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="transaction_date" value="{{ today_date }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                </div>
+            </div>
+
+            <!-- Supplier & Referensi -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Vendor / Supplier
+                    </label>
+                    <input type="text" name="supplier" placeholder="Nama toko / distributor" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        No. Referensi / PO / Faktur
+                    </label>
+                    <input type="text" name="reference_no" placeholder="PO-2026-..., BAST-..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600">
+                </div>
+            </div>
+
+            <!-- Batch / Lot & Expiry Date -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Nomor Batch / Lot
+                    </label>
+                    <input type="text" name="batch_lot" placeholder="Opsional" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Kedaluwarsa
+                    </label>
+                    <input type="date" name="expiry_date" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Catatan
+                </label>
+                <textarea name="notes" rows="2" placeholder="Keterangan tambahan barang masuk..." class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalBarangMasuk()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition-colors">
+                    Posting Barang Masuk
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 3: Transaksi Barang Keluar (Pemakaian Teknisi) -->
+<!-- ========================================================================= -->
+<div id="modalBarangKeluar" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-amber-50/50">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-base">Pengeluaran Barang (Pemakaian)</h3>
+                    <p class="text-xs text-gray-500">Mencatat konsumsi material untuk pekerjaan teknis IT.</p>
+                </div>
+            </div>
+            <button onclick="closeModalBarangKeluar()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_out' %}" method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% csrf_token %}
+
+            <!-- Pilih Item -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Pilih Item Consumable <span class="text-red-500">*</span>
+                </label>
+                <select id="out_item_select" name="item_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                    <option value="">-- Pilih Barang --</option>
+                    {% for itm in selectable_items %}
+                    <option value="{{ itm.id }}" data-stock="{{ itm.stock_available }}" data-base="{{ itm.base_unit }}">
+                        {{ itm.item_code }} - {{ itm.name }} (Stok: {{ itm.formatted_stock }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Jumlah & Satuan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Jumlah Dikeluarkan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" step="0.01" min="0.01" name="quantity" required placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Satuan Pemakaian
+                    </label>
+                    <select name="unit_type" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="base">Satuan Dasar</option>
+                        <option value="purchase">Satuan Pembelian</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Teknisi Penerima & Tanggal -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Teknisi / Karyawan Penerima <span class="text-red-500">*</span>
+                    </label>
+                    <select name="recipient_employee" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="">-- Pilih Teknisi --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.nik }} - {{ emp.name }} ({{ emp.position|default:"Staff" }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Pemakaian <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="transaction_date" value="{{ today_date }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                </div>
+            </div>
+
+            <!-- Tiket & Unit Aset Terkait -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        No. Tiket Support / Work Order
+                    </label>
+                    <input type="text" name="ticket_number" placeholder="WO-2026-..., TIKET-IT-..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Unit Aset Terkait <span class="text-gray-400 font-normal text-[10px]">(Jika maintenance aset)</span>
+                    </label>
+                    <select name="related_unit" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="">-- Tidak Terikat Unit Tertentu --</option>
+                        {% for unt in units %}
+                        <option value="{{ unt.id }}">{{ unt.unit_code }} - {{ unt.asset.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Peruntukan / Area Pekerjaan -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Tujuan / Area Penggunaan <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="source_destination" required placeholder="Contoh: Instalasi Titik LAN Adit 1, Repasting Server DB, Terminasi Patch Cord" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Catatan
+                </label>
+                <textarea name="notes" rows="2" placeholder="Keterangan tambahan penggunaan..." class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalBarangKeluar()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-amber-600 text-white text-sm font-bold shadow-sm shadow-amber-500/20 hover:bg-amber-700 transition-colors">
+                    Posting Barang Keluar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 4: Stock Opname / Penyesuaian Fisik -->
+<!-- ========================================================================= -->
+<div id="modalOpname" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-purple-50/50">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-base">Stock Opname & Penyesuaian</h3>
+                    <p class="text-xs text-gray-500">Sesuaikan saldo sistem dengan perhitungan fisik aktual di gudang.</p>
+                </div>
+            </div>
+            <button onclick="closeModalOpname()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_adjust' %}" method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Pilih Item Consumable <span class="text-red-500">*</span>
+                </label>
+                <select id="opname_item_select" name="item_id" required onchange="updateOpnameSystemStock(this)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-600 bg-white">
+                    <option value="">-- Pilih Barang --</option>
+                    {% for itm in selectable_items %}
+                    <option value="{{ itm.id }}" data-stock="{{ itm.stock_available }}" data-base="{{ itm.base_unit }}">
+                        {{ itm.item_code }} - {{ itm.name }} (Stok Sistem: {{ itm.formatted_stock }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Panel Selisih Real-time -->
+            <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Stok Sistem Saat Ini</p>
+                    <p id="opname_sys_stock" class="text-lg font-black text-gray-800">0</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Selisih (+/-)</p>
+                    <p id="opname_diff_display" class="text-lg font-black text-gray-500">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Stok Fisik Aktual <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="opname_actual_input" step="0.01" min="0" name="actual_stock" required oninput="calculateOpnameDiff()" placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-600 font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Opname <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="transaction_date" value="{{ today_date }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-600 bg-white">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Alasan Penyesuaian <span class="text-red-500">*</span>
+                </label>
+                <textarea name="reason" rows="3" required placeholder="Contoh: Hasil audit opname fisik akhir bulan; 2 pcs konektor rusak pecah dipisahkan..." class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalOpname()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-bold shadow-sm shadow-purple-500/20 hover:bg-purple-700 transition-colors">
+                    Posting Penyesuaian
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT MODAL HANDLERS -->
+<!-- ========================================================================= -->
+<script>
+    // Create Modal
+    function openCreateItemModal() {
+        document.getElementById('modalCreateItem').classList.remove('hidden');
+    }
+    function closeCreateItemModal() {
+        document.getElementById('modalCreateItem').classList.add('hidden');
+    }
+
+    // In Modal
+    function openModalBarangMasuk() {
+        document.getElementById('modalBarangMasuk').classList.remove('hidden');
+    }
+    function closeModalBarangMasuk() {
+        document.getElementById('modalBarangMasuk').classList.add('hidden');
+    }
+    function openModalBarangMasukItem(id, name, base, purchase) {
+        openModalBarangMasuk();
+        const select = document.getElementById('in_item_select');
+        select.value = id;
+    }
+
+    // Out Modal
+    function openModalBarangKeluar() {
+        document.getElementById('modalBarangKeluar').classList.remove('hidden');
+    }
+    function closeModalBarangKeluar() {
+        document.getElementById('modalBarangKeluar').classList.add('hidden');
+    }
+    function openModalBarangKeluarItem(id, name, base, stock) {
+        openModalBarangKeluar();
+        const select = document.getElementById('out_item_select');
+        select.value = id;
+    }
+
+    // Opname Modal
+    function openModalOpname() {
+        document.getElementById('modalOpname').classList.remove('hidden');
+    }
+    function closeModalOpname() {
+        document.getElementById('modalOpname').classList.add('hidden');
+    }
+
+    let currentOpnameStock = 0;
+    function updateOpnameSystemStock(select) {
+        const option = select.options[select.selectedIndex];
+        if (option && option.dataset.stock) {
+            currentOpnameStock = parseFloat(option.dataset.stock) || 0;
+            const baseUnit = option.dataset.base || '';
+            document.getElementById('opname_sys_stock').textContent = currentOpnameStock + ' ' + baseUnit;
+            calculateOpnameDiff();
+        } else {
+            currentOpnameStock = 0;
+            document.getElementById('opname_sys_stock').textContent = '0';
+            document.getElementById('opname_diff_display').textContent = '0';
+        }
+    }
+
+    function calculateOpnameDiff() {
+        const actualInput = document.getElementById('opname_actual_input');
+        const diffDisplay = document.getElementById('opname_diff_display');
+        const actual = parseFloat(actualInput.value);
+        if (!isNaN(actual)) {
+            const diff = actual - currentOpnameStock;
+            if (diff > 0) {
+                diffDisplay.textContent = '+' + diff;
+                diffDisplay.className = 'text-lg font-black text-emerald-600';
+            } else if (diff < 0) {
+                diffDisplay.textContent = diff;
+                diffDisplay.className = 'text-lg font-black text-red-600';
+            } else {
+                diffDisplay.textContent = '0';
+                diffDisplay.className = 'text-lg font-black text-gray-500';
+            }
+        } else {
+            diffDisplay.textContent = '0';
+            diffDisplay.className = 'text-lg font-black text-gray-500';
+        }
+    }
+</script>
+{% endblock %}

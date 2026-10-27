@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ item.item_code }} - {{ item.name }}{% endblock %}
+
+{% block page_title_guide %}Buku Besar & Riwayat Stok Consumable{% endblock %}
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Halaman ini menyajikan <b>Buku Besar Persediaan (Stock Ledger)</b> untuk item <b>{{ item.name }}</b>. Seluruh mutasi kuantitas dicatat secara permanen dan berurutan untuk keperluan audit.</p>
+    <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+        <h4 class="font-bold text-blue-800 text-xs uppercase tracking-wider mb-1">Mekanisme Reversal (Pembalik Transaksi)</h4>
+        <p class="text-xs text-blue-700">Jika terjadi kesalahan input transaksi yang telah diposting, sistem menyediakan tombol <b>Reversal</b>. Transaksi asal tidak akan dihapus melainkan ditandai dan dibuatkan entri transaksi pembalik secara atomik untuk menjaga keutuhan audit trail.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Header Navigation & Actions -->
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
+    <div>
+        <div class="flex items-center space-x-2 text-xs font-bold text-gray-400 mb-1">
+            <a href="{% url 'consumable_list' %}" class="hover:text-kerinci transition-colors">Consumable Item</a>
+            <span>&bull;</span>
+            <span class="text-kerinci font-mono">{{ item.item_code }}</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900">{{ item.name }}</h2>
+            <!-- Status Badge -->
+            {% if item.stock_status == 'out_of_stock' %}
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                Stok Habis
+            </span>
+            {% elif item.stock_status == 'low_stock' %}
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                Stok Menipis
+            </span>
+            {% else %}
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Stok Tersedia
+            </span>
+            {% endif %}
+            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                {{ item.get_category_display }}
+            </span>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">{{ item.brand|default:"Tanpa Merek" }} &bull; {{ item.specification|default:"Tidak ada spesifikasi khusus" }}</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <a href="{% url 'consumable_list' %}" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors flex items-center space-x-1.5 bg-white shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Katalog</span>
+        </a>
+        {% if not is_read_only %}
+        <button onclick="openModalBarangMasuk()" class="bg-blue-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>+ Barang Masuk</span>
+        </button>
+        <button onclick="openModalBarangKeluar()" class="bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-amber-500/20 hover:bg-amber-700 transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>- Barang Keluar</span>
+        </button>
+        <button onclick="openModalEditItem()" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-1.5 bg-white shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <span>Edit Master</span>
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Specs & Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <!-- Card 1: Stok Saat Ini -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Stok Tersedia</p>
+        <h3 class="text-3xl font-black {% if item.stock_status == 'out_of_stock' %}text-red-600{% elif item.stock_status == 'low_stock' %}text-amber-600{% else %}text-emerald-700{% endif %}">
+            {{ item.formatted_stock }}
+        </h3>
+        <p class="text-xs text-gray-500 mt-1">Batas Minimum: <b>{{ item.formatted_minimum_stock }}</b></p>
+    </div>
+
+    <!-- Card 2: Satuan & Rasio Konversi -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Satuan & Konversi</p>
+        <h4 class="text-lg font-extrabold text-gray-800">UoM: {{ item.base_unit }}</h4>
+        {% if item.purchase_unit %}
+        <p class="text-xs text-gray-600 mt-1">
+            Beli: <b>{{ item.purchase_unit }}</b> (1 {{ item.purchase_unit }} = {{ item.conversion_rate|floatformat:0 }} {{ item.base_unit }})
+        </p>
+        {% else %}
+        <p class="text-xs text-gray-400 mt-1">Hanya menggunakan satuan dasar.</p>
+        {% endif %}
+    </div>
+
+    <!-- Card 3: Lokasi & Gudang -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Lokasi Penyimpanan</p>
+        <h4 class="text-lg font-extrabold text-gray-800 truncate" title="{{ item.location }}">{{ item.location }}</h4>
+        <p class="text-xs text-gray-500 mt-1">
+            Harga Beli: {% if item.last_purchase_price > 0 %}Rp {{ item.last_purchase_price|floatformat:0 }}{% else %}Tidak diset{% endif %}
+        </p>
+    </div>
+
+    <!-- Card 4: Akumulasi Perputaran Material -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Perputaran Material</p>
+        <div class="flex items-center justify-between text-xs mt-1">
+            <span class="text-gray-500">Total Masuk:</span>
+            <span class="font-bold text-blue-700">+{{ total_in|floatformat:1 }} {{ item.base_unit }}</span>
+        </div>
+        <div class="flex items-center justify-between text-xs mt-1">
+            <span class="text-gray-500">Total Keluar:</span>
+            <span class="font-bold text-amber-700">-{{ total_out|floatformat:1 }} {{ item.base_unit }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Ledger Table (Buku Besar Mutasi) -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-kerinci" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <h3 class="font-extrabold text-gray-900 text-sm">Buku Besar Persediaan (Stock Ledger)</h3>
+        </div>
+        <span class="text-xs text-gray-500 font-medium">Audit Trail Mutasi Stok</span>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+                <tr class="bg-gray-50/75 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <th class="py-3 px-4">Tanggal & Ref</th>
+                    <th class="py-3 px-4 text-center">Tipe Transaksi</th>
+                    <th class="py-3 px-4 text-right">Kuantitas Transaksi</th>
+                    <th class="py-3 px-4 text-right">Efektif Dasar</th>
+                    <th class="py-3 px-4 text-right">Saldo Sebelum</th>
+                    <th class="py-3 px-4 text-right">Saldo Sesudah</th>
+                    <th class="py-3 px-4">Penerima / Sumber / Area</th>
+                    <th class="py-3 px-4">Ref Tiket / Unit</th>
+                    <th class="py-3 px-4">Petugas</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-xs">
+                {% for trx in page_obj %}
+                <tr class="hover:bg-gray-50/80 transition-colors {% if trx.is_reversed %}opacity-60 bg-gray-50/50 line-through{% endif %}">
+                    <!-- Tanggal & Kode Transaksi -->
+                    <td class="py-3 px-4 whitespace-nowrap">
+                        <div class="font-bold text-gray-900">{{ trx.transaction_date|date:"d M Y" }}</div>
+                        <div class="font-mono text-[10px] text-gray-400">{{ trx.transaction_code }}</div>
+                    </td>
+
+                    <!-- Tipe Transaksi Badge -->
+                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                        {% if trx.transaction_type == 'in' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                            Masuk
+                        </span>
+                        {% elif trx.transaction_type == 'out' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                            Keluar
+                        </span>
+                        {% elif trx.transaction_type == 'adjustment' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+                            Opname
+                        </span>
+                        {% elif trx.transaction_type == 'reversal' %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 text-gray-800">
+                            Reversal
+                        </span>
+                        {% endif %}
+                        {% if trx.is_reversed %}
+                        <span class="block text-[9px] text-red-600 font-bold mt-0.5 no-underline">DIBALIK</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Kuantitas Transaksi -->
+                    <td class="py-3 px-4 text-right whitespace-nowrap font-mono">
+                        {% if trx.transaction_type == 'in' %}
+                        <span class="font-bold text-blue-600">+{{ trx.quantity }} {{ trx.unit }}</span>
+                        {% elif trx.transaction_type == 'out' %}
+                        <span class="font-bold text-amber-600">-{{ trx.quantity }} {{ trx.unit }}</span>
+                        {% elif trx.transaction_type == 'reversal' %}
+                        <span class="font-bold text-gray-600">{{ trx.quantity }} {{ trx.unit }}</span>
+                        {% else %}
+                        <span class="font-bold text-purple-600">{{ trx.quantity }} {{ trx.unit }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Kuantitas Satuan Dasar -->
+                    <td class="py-3 px-4 text-right whitespace-nowrap font-mono font-bold text-gray-800">
+                        {{ trx.quantity_base }} {{ item.base_unit }}
+                    </td>
+
+                    <!-- Saldo Sebelum -->
+                    <td class="py-3 px-4 text-right whitespace-nowrap font-mono text-gray-500">
+                        {{ trx.stock_before }}
+                    </td>
+
+                    <!-- Saldo Sesudah -->
+                    <td class="py-3 px-4 text-right whitespace-nowrap font-mono font-black text-gray-900">
+                        {{ trx.stock_after }}
+                    </td>
+
+                    <!-- Penerima / Sumber / Area -->
+                    <td class="py-3 px-4 max-w-[200px]">
+                        {% if trx.recipient_employee %}
+                        <div class="font-semibold text-gray-800">{{ trx.recipient_employee.name }}</div>
+                        {% endif %}
+                        <div class="text-[11px] text-gray-500 truncate" title="{{ trx.source_destination }}">
+                            {{ trx.source_destination|default:"-" }}
+                        </div>
+                        {% if trx.supplier %}
+                        <div class="text-[10px] text-gray-400">Supplier: {{ trx.supplier }}</div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Ref Tiket / Unit -->
+                    <td class="py-3 px-4 whitespace-nowrap">
+                        {% if trx.ticket_number %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-50 text-blue-700 font-semibold mb-0.5">
+                            {{ trx.ticket_number }}
+                        </span>
+                        {% endif %}
+                        {% if trx.related_unit %}
+                        <div class="text-[11px] text-gray-600 font-medium">Unit: {{ trx.related_unit.unit_code }}</div>
+                        {% endif %}
+                        {% if trx.reference_no %}
+                        <div class="text-[10px] text-gray-400">Ref: {{ trx.reference_no }}</div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Petugas Pelaksana -->
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-600">
+                        {{ trx.performed_by.username|default:"Sistem" }}
+                        {% if trx.notes %}
+                        <div class="text-[10px] text-gray-400 italic max-w-[150px] truncate" title="{{ trx.notes }}">
+                            "{{ trx.notes }}"
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Aksi Reversal -->
+                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                        {% if not is_read_only and not trx.is_reversed and trx.transaction_type != 'reversal' %}
+                        <button onclick="openModalReversal('{{ trx.id }}', '{{ trx.transaction_code }}')" class="px-2 py-1 text-[10px] font-bold text-red-600 hover:text-white hover:bg-red-600 border border-red-200 rounded-lg transition-colors" title="Balik Transaksi (Reversal)">
+                            Reversal
+                        </button>
+                        {% else %}
+                        <span class="text-gray-300">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="py-10 text-center text-gray-400">
+                        Belum ada mutasi transaksi untuk item ini.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginasi -->
+    {% include 'components/pagination.html' %}
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Edit Master Consumable Item -->
+<!-- ========================================================================= -->
+<div id="modalEditItem" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-base">Edit Data Master: {{ item.item_code }}</h3>
+                    <p class="text-xs text-gray-500">Perbarui informasi metadata, spesifikasi, dan batas stok minimum.</p>
+                </div>
+            </div>
+            <button onclick="closeModalEditItem()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_edit' item.id %}" method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Nama Barang <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="name" value="{{ item.name }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <select name="category" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        {% for cat_val, cat_label in categories %}
+                        <option value="{{ cat_val }}" {% if item.category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Merek / Brand
+                    </label>
+                    <input type="text" name="brand" value="{{ item.brand|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Lokasi Penyimpanan
+                    </label>
+                    <select name="location" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        {% for loc in locations %}
+                        <option value="{{ loc }}" {% if item.location == loc %}selected{% endif %}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Spesifikasi Teknis
+                </label>
+                <input type="text" name="specification" value="{{ item.specification|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci">
+            </div>
+
+            <div class="p-3.5 bg-gray-50/80 rounded-xl border border-gray-200 space-y-3">
+                <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Satuan Kuantitas & Konversi</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Satuan Dasar (UoM) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="base_unit" value="{{ item.base_unit }}" required class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Satuan Pembelian
+                        </label>
+                        <input type="text" name="purchase_unit" value="{{ item.purchase_unit|default:'' }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Faktor Konversi
+                        </label>
+                        <input type="number" step="0.01" min="0.01" name="conversion_rate" value="{{ item.conversion_rate }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Batas Stok Minimum
+                    </label>
+                    <input type="number" step="0.01" min="0" name="minimum_stock" value="{{ item.minimum_stock }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Harga Beli Terakhir (Rp)
+                    </label>
+                    <input type="number" step="100" min="0" name="last_purchase_price" value="{{ item.last_purchase_price }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci font-mono">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Catatan
+                </label>
+                <textarea name="notes" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci">{{ item.notes|default:'' }}</textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalEditItem()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-kerinci text-white text-sm font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Barang Masuk (Item Ini) -->
+<!-- ========================================================================= -->
+<div id="modalBarangMasuk" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+            <h3 class="font-extrabold text-gray-900 text-base">Barang Masuk: {{ item.name }}</h3>
+            <button onclick="closeModalBarangMasuk()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_in' %}" method="POST" class="p-6 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Jumlah Masuk <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" step="0.01" min="0.01" name="quantity" required placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Satuan
+                    </label>
+                    <select name="unit_type" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                        <option value="base">Satuan Dasar ({{ item.base_unit }})</option>
+                        {% if item.purchase_unit %}
+                        <option value="purchase">Satuan Beli ({{ item.purchase_unit }} = {{ item.conversion_rate|floatformat:0 }} {{ item.base_unit }})</option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Sumber
+                    </label>
+                    <select name="source_destination" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                        <option value="Pembelian / Restock">Pembelian / Restock</option>
+                        <option value="Pengembalian Sisa Teknisi">Pengembalian Sisa Teknisi</option>
+                        <option value="Transfer Antar Gudang">Transfer Antar Gudang</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Penerimaan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="transaction_date" value="{{ today_date }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600 bg-white">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Supplier / Vendor
+                    </label>
+                    <input type="text" name="supplier" placeholder="Nama toko / vendor" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        No. PO / BAST
+                    </label>
+                    <input type="text" name="reference_no" placeholder="PO-2026-..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Catatan
+                </label>
+                <textarea name="notes" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalBarangMasuk()" class="px-5 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-sm hover:bg-blue-700">
+                    Posting Masuk
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Barang Keluar (Item Ini) -->
+<!-- ========================================================================= -->
+<div id="modalBarangKeluar" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-amber-50/50">
+            <h3 class="font-extrabold text-gray-900 text-base">Barang Keluar: {{ item.name }}</h3>
+            <button onclick="closeModalBarangKeluar()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'consumable_out' %}" method="POST" class="p-6 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Jumlah Keluar <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" step="0.01" min="0.01" max="{{ item.stock_available }}" name="quantity" required placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 font-mono font-bold">
+                    <span class="text-[10px] text-gray-400">Tersedia: {{ item.formatted_stock }}</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Satuan
+                    </label>
+                    <select name="unit_type" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="base">Satuan Dasar ({{ item.base_unit }})</option>
+                        {% if item.purchase_unit %}
+                        <option value="purchase">Satuan Beli ({{ item.purchase_unit }})</option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Teknisi Penerima <span class="text-red-500">*</span>
+                    </label>
+                    <select name="recipient_employee" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="">-- Pilih Karyawan --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.nik }} - {{ emp.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Tanggal Pemakaian <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="transaction_date" value="{{ today_date }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        No. Tiket / Work Order
+                    </label>
+                    <input type="text" name="ticket_number" placeholder="WO-2026-..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Unit Aset Terkait
+                    </label>
+                    <select name="related_unit" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600 bg-white">
+                        <option value="">-- Opsional --</option>
+                        {% for unt in units %}
+                        <option value="{{ unt.id }}">{{ unt.unit_code }} - {{ unt.asset.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Tujuan / Area Penggunaan <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="source_destination" required placeholder="Contoh: Maintenance Switch Ruang Kontrol" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Catatan
+                </label>
+                <textarea name="notes" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalBarangKeluar()" class="px-5 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold shadow-sm hover:bg-amber-700">
+                    Posting Keluar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Reversal Transaksi -->
+<!-- ========================================================================= -->
+<div id="modalReversal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-red-50/50">
+            <h3 class="font-extrabold text-red-900 text-base">Reversal Transaksi</h3>
+            <button onclick="closeModalReversal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form id="reversalForm" method="POST" action="" class="p-6 space-y-4">
+            {% csrf_token %}
+            <p class="text-xs text-gray-600">
+                Anda akan membalik transaksi <b id="reversal_trx_code" class="font-mono text-gray-900"></b>. Saldo stok item akan disesuaikan kembali secara otomatis.
+            </p>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Alasan Pembatalan / Reversal <span class="text-red-500">*</span>
+                </label>
+                <textarea name="reversal_reason" rows="3" required placeholder="Jelaskan alasan pembalikan transaksi ini (misal: salah input kuantitas, duplikasi entri)..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-red-600"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeModalReversal()" class="px-5 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2 rounded-xl bg-red-600 text-white text-sm font-bold shadow-sm hover:bg-red-700">
+                    Eksekusi Reversal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModalEditItem() {
+        document.getElementById('modalEditItem').classList.remove('hidden');
+    }
+    function closeModalEditItem() {
+        document.getElementById('modalEditItem').classList.add('hidden');
+    }
+
+    function openModalBarangMasuk() {
+        document.getElementById('modalBarangMasuk').classList.remove('hidden');
+    }
+    function closeModalBarangMasuk() {
+        document.getElementById('modalBarangMasuk').classList.add('hidden');
+    }
+
+    function openModalBarangKeluar() {
+        document.getElementById('modalBarangKeluar').classList.remove('hidden');
+    }
+    function closeModalBarangKeluar() {
+        document.getElementById('modalBarangKeluar').classList.add('hidden');
+    }
+
+    function openModalReversal(trxId, trxCode) {
+        document.getElementById('reversal_trx_code').textContent = trxCode;
+        document.getElementById('reversalForm').action = "/consumable/transaction/" + trxId + "/reverse/";
+        document.getElementById('modalReversal').classList.remove('hidden');
+    }
+    function closeModalReversal() {
+        document.getElementById('modalReversal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

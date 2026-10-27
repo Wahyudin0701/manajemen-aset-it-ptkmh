@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Unit Aset{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center items-start space-y-4 sm:space-y-0">
+    <div>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">{{ asset.category.name }}</p>
+        <div class="flex items-center space-x-3">
+            <h2 class="text-3xl font-extrabold text-gray-900">{{ asset.name }}</h2>
+            <button onclick="openGuideModal()" class="w-5 h-5 rounded-full bg-gray-200 text-gray-600 hover:bg-kerinci hover:text-white flex items-center justify-center text-xs font-extrabold transition-colors shadow-sm shrink-0" title="Panduan Halaman">!</button>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">Kode: <strong>{{ asset.asset_code }}</strong> &middot; Total: <strong>{{ asset.qty }} {{ asset.uom }}</strong></p>
+    </div>
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+        <a href="{% url 'asset_list' %}" class="order-1 sm:order-1 bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex-1 sm:flex-none text-center">
+            Kembali
+        </a>
+        
+        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
+              <button onclick="var d = document.getElementById('exportMenuUnits'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <span>Ekspor Data</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div id="exportMenuUnits" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
+                  <a href="{% url 'asset_units_export_pdf' asset.id %}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      Format PDF
+                  </a>
+                  <div class="h-px bg-gray-100 mx-2"></div>
+                  <a href="{% url 'asset_units_export_excel' asset.id %}" class="flex items-center px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-b-xl font-bold transition-colors">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      Format Excel (.xlsx)
+                  </a>
+              </div>
+          </div>
+        
+        <button onclick="openAddUnitModal()" class="order-2 sm:order-3 bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2.5 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center justify-center space-x-2 flex-1 sm:flex-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Tambah Unit</span>
+        </button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="grid grid-cols-3 gap-3 sm:gap-6 mb-6">
+    <div class="flex flex-col items-center">
+        <div class="bg-emerald-50 rounded-2xl w-full aspect-[4/3] sm:aspect-auto sm:h-24 flex items-center justify-center mb-3 shadow-sm border border-emerald-100">
+            <p class="text-3xl sm:text-4xl font-extrabold text-emerald-600">{{ tersedia }}</p>
+        </div>
+        <p class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Tersedia</p>
+    </div>
+    <div class="flex flex-col items-center">
+        <div class="bg-blue-50 rounded-2xl w-full aspect-[4/3] sm:aspect-auto sm:h-24 flex items-center justify-center mb-3 shadow-sm border border-blue-100">
+            <p class="text-3xl sm:text-4xl font-extrabold text-blue-600">{{ digunakan }}</p>
+        </div>
+        <p class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Digunakan</p>
+    </div>
+    <div class="flex flex-col items-center">
+        <div class="bg-gray-50 rounded-2xl w-full aspect-[4/3] sm:aspect-auto sm:h-24 flex items-center justify-center mb-3 shadow-sm border border-gray-200">
+            <p class="text-3xl sm:text-4xl font-extrabold text-gray-700">{{ units|length }}</p>
+        </div>
+        <p class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Total Unit</p>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-none sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
+                    <th class="p-3 font-bold text-center w-16">No</th>
+                    <th class="p-3 font-bold">Kode Unit</th>
+
+                    <th class="p-3 font-bold text-center">Status</th>
+                    <th class="p-3 font-bold">{% if "Network" in asset.category.name %}Lokasi{% else %}Dipegang Oleh{% endif %}</th>
+                    <th class="p-3 font-bold text-center w-24">QR Code</th>
+                    <th class="p-3 font-bold text-center w-32">Riwayat Unit</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-gray-200">
+                {% for unit in units %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 text-center text-gray-500">{{ forloop.counter }}</td>
+                    <td class="p-3">
+                        <a href="{% url 'unit_history' unit.id %}" class="font-bold text-gray-900 hover:text-kerinci transition-colors inline-block w-max">{{ unit.unit_code }}</a>
+                    </td>
+
+                    <td class="p-3 text-center">
+                        {% if unit.status == 'tersedia' %}
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1 cursor-pointer">
+                                Tersedia
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        {% elif unit.status == 'digunakan' %}
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 cursor-pointer">
+                                Digunakan
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        {% elif unit.status == 'rusak' %}
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 cursor-pointer">
+                                Maintenance
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        {% else %}
+                            <button onclick="openStatusModal('{{ unit.id }}', '{{ unit.unit_code }}', '{{ unit.status }}', '{% if unit.assigned_to %}{{ unit.assigned_to.name|escapejs }}{% endif %}', '{{ unit.asset.category.name|escapejs }}', '{{ unit.area|default_if_none:""|escapejs }}', '{{ unit.location|default_if_none:""|escapejs }}')" title="Klik untuk ubah status" style="display:inline-flex;align-items:center;gap:4px;" class="bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 cursor-pointer">
+                                {{ unit.get_status_display }}
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.7;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                        {% endif %}
+                    </td>
+                    <td class="p-3">
+                        {% if unit.assigned_to %}
+                            <a href="{% url 'employee_detail' unit.assigned_to.id %}" class="flex flex-col group w-max">
+                                <p class="font-bold text-gray-800 text-xs transition-colors group-hover:text-kerinci">{{ unit.assigned_to.name }}</p>
+                                <p class="text-[10px] text-gray-400 transition-colors group-hover:text-kerinci/70">NIK: {{ unit.assigned_to.nik }}</p>
+                            </a>
+                        {% elif unit.area %}
+                            <div class="flex flex-col">
+                                <p class="font-bold text-kerinci text-xs">{{ unit.area }}</p>
+                                <p class="text-[10px] text-gray-500 max-w-[150px] truncate" title="{{ unit.location }}">{{ unit.location }}</p>
+                            </div>
+                        {% else %}
+                            <span class="text-gray-300 text-xs italic">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3 text-center">
+                        <button type="button" onclick="openQrModal('{% url 'unit_qr_code' unit.id_uuid %}', '{{ unit.unit_code }}')" class="inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-kerinci focus:ring-offset-1" title="Lihat/Download QR">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </button>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center items-center space-x-1">
+                            <a href="{% url 'unit_history' unit.id %}" class="inline-flex items-center justify-center p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Riwayat Unit">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-8 text-center text-gray-400 text-sm">
+                        Belum ada unit untuk jenis aset ini.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah Unit -->
+<div id="addUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeAddUnitModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Tambah Unit Baru</h3>
+        <form id="addUnitForm" action="{% url 'unit_add' asset.id %}" method="POST" class="space-y-4" onsubmit="submitAddUnit(event)">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Aset Induk</label>
+                <input type="text" value="{{ asset.asset_code }} - {{ asset.name }}" disabled class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm bg-gray-100 text-gray-500 cursor-not-allowed">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Kode Unit <span class="text-red-500">*</label>
+                <div class="flex">
+                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-100 text-gray-500 text-sm font-bold">
+                        {{ asset.asset_code }}-
+                    </span>
+                    <input type="text" id="add_unit_code_suffix" name="unit_code_suffix" required pattern="\d+" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-none rounded-r-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white" placeholder="Contoh: 001">
+                </div>
+                <p id="add_error" class="text-red-500 text-xs mt-1 hidden font-bold"></p>
+            </div>
+
+            
+
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeAddUnitModal()" class="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-kerinci text-white font-bold rounded-lg text-sm shadow-sm hover:bg-kerinci/90 transition-colors flex items-center justify-center">
+                    <span id="add_spinner" class="hidden mr-2">...</span>
+                    Simpan Unit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Update Status Unit -->
+<div id="statusUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeStatusUnitModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md relative mx-auto z-10 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Update Status Unit</h3>
+        <p class="text-sm text-gray-500 mb-1">Kode Unit: <strong id="su_code" class="text-gray-900"></strong></p>
+        <p id="su_assigned_info" class="text-sm text-gray-500 mb-4 hidden">Dipegang Oleh: <strong id="su_assigned_name" class="text-gray-900"></strong></p>
+        <form id="statusUnitForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Status Baru</label>
+                <select id="su_status" name="status" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50">
+                    <option value="tersedia" id="opt_su_tersedia">Tersedia</option>
+                    <option value="digunakan" id="opt_su_digunakan" class="hidden" disabled>Digunakan</option>
+                    <option value="rusak">Diperbaiki (Rusak / Maintenance)</option>
+                </select>
+                <p id="su_bast_warning" class="text-xs text-amber-600 mt-1 hidden font-bold">* Aset sedang digunakan. Pengembalian atau Mutasi harus melalui menu Distribusi Aset.</p>
+            </div>
+            
+            <div id="su_notes_container" class="hidden">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Catatan Kejadian <span class="text-red-500">*</span></label>
+                <textarea id="su_notes" name="notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50" placeholder="Jelaskan alasan perbaikan / keluhan kerusakan..."></textarea>
+            </div>
+            <div id="su_network_fields" class="hidden space-y-4 pt-4 border-t border-gray-100 mt-4">
+                <p class="text-xs font-bold text-gray-500 uppercase">Detail Lokasi Pemasangan</p>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Area <span class="text-red-500">*</span></label>
+                    <select id="su_area" name="area" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50">
+                        <option value="">-- Pilih Area --</option>
+                        <option value="Regulating Weir (RW)">Regulating Weir (RW)</option>
+                        <option value="Jakon">Jakon</option>
+                        <option value="Beringin Tunggal (BT)">Beringin Tunggal (BT)</option>
+                        <option value="DAM">DAM</option>
+                        <option value="Adit 1">Adit 1</option>
+                        <option value="Adit 2">Adit 2</option>
+                        <option value="Adit 3">Adit 3</option>
+                        <option value="Gudang Induk (GI)">Gudang Induk (GI)</option>
+                        <option value="Vertical Shaft (VS)">Vertical Shaft (VS)</option>
+                        <option value="Power House (PH)">Power House (PH)</option>
+                        <option value="Lain-lainnya">Lain-lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Lokasi Spesifik <span class="text-red-500">*</span></label>
+                    <input type="text" id="su_location" name="location" class="w-full px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-gray-50" placeholder="Misal: Dinding server room barat...">
+                </div>
+            </div>
+            
+            
+
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeStatusUnitModal()" class="px-4 py-2 border border-gray-300 text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-kerinci text-white font-bold rounded-lg text-sm shadow-sm hover:bg-kerinci/90 transition-colors">
+                    Simpan Status
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity opacity-0" id="qrModalBackdrop" onclick="closeQrModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" id="qrModalPanel">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 text-center">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-kerinci/10 mb-4">
+                            <svg class="h-6 w-6 text-kerinci" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                            </svg>
+                        </div>
+                        
+                        <p class="text-sm text-gray-500 mb-6">Scan QR ini untuk melihat detail lengkap dan riwayat unit.</p>
+                        
+                        <!-- QR Image Container -->
+                        <div class="bg-gray-50 rounded-xl p-4 flex justify-center items-center border border-gray-100 mb-6 min-h-[200px]">
+                            <img id="qrModalImage" src="" alt="QR Code" class="w-full h-auto max-w-[280px] object-contain mx-auto">
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-4 sm:flex sm:flex-row-reverse sm:px-6">
+                        <a id="qrDownloadBtn" href="" download="QRCode.png" class="inline-flex w-full justify-center rounded-xl bg-kerinci px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-kerinci-dark sm:ml-3 sm:w-auto transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download QR
+                        </a>
+                        <button type="button" onclick="closeQrModal()" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    async function submitAddUnit(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const spinner = document.getElementById('add_spinner');
+        const errorText = document.getElementById('add_error');
+        
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+        errorText.classList.add('hidden');
+        errorText.innerText = '';
+        
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                errorText.innerText = data.message || 'Terjadi kesalahan sistem.';
+                errorText.classList.remove('hidden');
+                
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        } catch (err) {
+            errorText.innerText = 'Koneksi terputus. Coba lagi.';
+            errorText.classList.remove('hidden');
+            
+            spinner.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }
+
+    function openAddUnitModal() {
+        document.getElementById('add_error').classList.add('hidden');
+        document.getElementById('addUnitModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('add_unit_code_suffix').focus();
+        }, 50);
+    }
+    function closeAddUnitModal() {
+        document.getElementById('addUnitModal').classList.add('hidden');
+    }
+
+    function openStatusModal(id, fullCode, status, assignedTo, categoryName, area, location) {
+        document.getElementById('statusUnitForm').action = '/unit/' + id + '/status/';
+        document.getElementById('su_code').innerText = fullCode;
+        
+        const assignedInfo = document.getElementById('su_assigned_info');
+        const assignedName = document.getElementById('su_assigned_name');
+        if (assignedTo && assignedTo !== 'None' && assignedTo !== '' && assignedTo !== 'true') {
+            assignedName.innerText = assignedTo;
+            assignedInfo.classList.remove('hidden');
+        } else {
+            assignedInfo.classList.add('hidden');
+        }
+        
+        const statSelect = document.getElementById('su_status');
+        const optTersedia = document.getElementById('opt_su_tersedia');
+        const optDigunakan = document.getElementById('opt_su_digunakan');
+        const warnText = document.getElementById('su_bast_warning');
+        
+        const netFields = document.getElementById('su_network_fields');
+        const areaInput = document.getElementById('su_area');
+        const locInput = document.getElementById('su_location');
+        
+        netFields.classList.add('hidden');
+        areaInput.required = false;
+        locInput.required = false;
+        areaInput.value = area && area !== 'None' ? area : '';
+        locInput.value = location && location !== 'None' ? location : '';
+        
+        const isNetwork = categoryName && categoryName.includes('Network');
+
+        if (assignedTo && assignedTo !== 'None' && assignedTo !== '') {
+            optDigunakan.disabled = false;
+            optDigunakan.classList.remove('hidden');
+            optTersedia.disabled = true;
+            optTersedia.classList.add('hidden');
+            warnText.classList.remove('hidden');
+            let empName = assignedTo === 'true' ? 'karyawan' : assignedTo;
+            warnText.innerHTML = '* Aset sedang digunakan oleh <strong class="font-extrabold underline">' + empName + '</strong>. Pengembalian harus melalui menu Distribusi Aset.';
+        } else if (isNetwork) {
+            optDigunakan.disabled = false;
+            optDigunakan.classList.remove('hidden');
+            optTersedia.disabled = false;
+            optTersedia.classList.remove('hidden');
+            warnText.classList.add('hidden');
+        } else {
+            optDigunakan.disabled = true;
+            optDigunakan.classList.add('hidden');
+            optTersedia.disabled = false;
+            optTersedia.classList.remove('hidden');
+            warnText.classList.add('hidden');
+        }
+        
+        statSelect.value = status;
+        
+        statSelect.onchange = function() {
+            const notesContainer = document.getElementById('su_notes_container');
+            const notesInput = document.getElementById('su_notes');
+            
+            if (this.value === 'rusak') {
+                notesContainer.classList.remove('hidden');
+                notesInput.required = true;
+            } else {
+                notesContainer.classList.add('hidden');
+                notesInput.required = false;
+            }
+            
+            if ((this.value === 'digunakan' || this.value === 'rusak') && isNetwork) {
+                netFields.classList.remove('hidden');
+                areaInput.required = true;
+                locInput.required = true;
+            } else {
+                netFields.classList.add('hidden');
+                areaInput.required = false;
+                locInput.required = false;
+            }
+        };
+        
+        statSelect.onchange();
+        document.getElementById('statusUnitModal').classList.remove('hidden');
+    }
+
+    function closeStatusUnitModal() {
+        document.getElementById('statusUnitModal').classList.add('hidden');
+    }
+
+    function openQrModal(qrUrl, unitCode) {
+        const modal = document.getElementById('qrModal');
+        const backdrop = document.getElementById('qrModalBackdrop');
+        const panel = document.getElementById('qrModalPanel');
+        
+        
+        document.getElementById('qrModalImage').src = qrUrl;
+        
+        const downloadBtn = document.getElementById('qrDownloadBtn');
+        downloadBtn.href = qrUrl;
+        downloadBtn.download = 'QR_' + unitCode + '.png';
+        
+        modal.classList.remove('hidden');
+        // Trigger reflow
+        void modal.offsetWidth;
+        
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+        
+        panel.classList.remove('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
+        panel.classList.add('opacity-100', 'translate-y-0', 'sm:scale-100');
+    }
+
+    function closeQrModal() {
+        const modal = document.getElementById('qrModal');
+        const backdrop = document.getElementById('qrModalBackdrop');
+        const panel = document.getElementById('qrModalPanel');
+        
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0');
+        
+        panel.classList.remove('opacity-100', 'translate-y-0', 'sm:scale-100');
+        panel.classList.add('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.getElementById('qrModalImage').src = ''; // Clear image
+        }, 300);
+    }
+
+</script>
+{% endblock %}
+
+{% block page_title_guide %}Manajemen Detail Unit{% endblock %}
+
+{% block page_guide_content %}
+<div class="space-y-4">
+    <p>Halaman <strong>Unit Aset</strong> menjabarkan fisik peranti/barang (kuantitas aktual) dari satu jenis inventaris (misal: Laptop Lenovo). Di halaman ini Anda dapat:</p>
+    
+    <div class="space-y-3">
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-kerinci bg-kerinci-light rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Mendaftarkan Unit Baru (S/N)</h4>
+                <p>Klik tombol <strong>"Tambah Unit"</strong> untuk mendaftarkan barang baru yang masuk (misal ada pembelian laptop baru dari tipe ini). Anda wajib memasukkan <strong>Nomor Seri (S/N)</strong> yang ada pada fisik barang.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-blue-500 bg-blue-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Cetak & Unduh Label QR Code</h4>
+                <p>Setiap unit secara otomatis digenerasikan <strong>QR Code unik</strong>. Klik ikon kotak di kolom QR Code untuk melihat/mengunduh gambarnya. Stiker QR ini nantinya bisa ditempelkan di fisik barang untuk keperluan *scanning*.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-red-500 bg-red-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Ubah Status Kondisi Cepat</h4>
+                <p>Layaknya pada halaman Status Aset, Anda bisa langsung mengklik label/badge status (cth: "Tersedia" hijau) di tabel ini untuk melaporkan jika unit tersebut masuk fase <em>Maintenance</em> (rusak) tanpa perlu berpindah menu.</p>
+            </div>
+        </div>
+
+        <div class="flex items-start space-x-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div class="mt-0.5 text-indigo-500 bg-indigo-50 rounded p-1 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-900 mb-1">Riwayat Spesifik Barang</h4>
+                <p>Klik ikon jam di kolom paling kanan untuk menelusuri ke mana saja spesifik unit ini pernah dipinjamkan dari sejak awal ia diregistrasi.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script>
+document.addEventListener('click', function() {
+    var menu = document.getElementById('exportMenuUnits');
+    if (menu) menu.style.display = 'none';
+});
+</script>

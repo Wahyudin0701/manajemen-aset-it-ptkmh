@@ -1,0 +1,37 @@
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local databases & logs
+db.sqlite3
+*.log
+*.bak
+
+# Environment variables
+.env
+.env.local
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation & Scratch artifacts
+docs/
+scratch/
+.git/
+.gitignore
+
+# Static & media temporary
+staticfiles/
+media/bast_documents/*
+!media/bast_documents/.gitkeep

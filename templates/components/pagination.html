@@ -1,0 +1,50 @@
+{% if page_obj.has_other_pages %}
+<div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="text-sm text-gray-500">
+        Menampilkan <span class="font-bold text-gray-900">{{ page_obj.start_index }}</span> - <span class="font-bold text-gray-900">{{ page_obj.end_index }}</span> dari <span class="font-bold text-gray-900">{{ page_obj.paginator.count }}</span> data
+    </div>
+    <div class="flex items-center space-x-1">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                &laquo; Prev
+            </a>
+        {% else %}
+            <span class="px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-semibold text-gray-300 cursor-not-allowed">
+                &laquo; Prev
+            </span>
+        {% endif %}
+
+        {% for p in page_obj.paginator.page_range %}
+            {% if p == page_obj.number %}
+                <span class="px-3.5 py-1.5 rounded-lg bg-kerinci text-white text-sm font-bold shadow-sm">
+                    {{ p }}
+                </span>
+            {% elif p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                <a href="?page={{ p }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3.5 py-1.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                    {{ p }}
+                </a>
+            {% elif p == 1 or p == page_obj.paginator.num_pages %}
+                <a href="?page={{ p }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3.5 py-1.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                    {{ p }}
+                </a>
+            {% elif p == page_obj.number|add:"-3" or p == page_obj.number|add:"3" %}
+                <span class="px-2 py-1.5 text-sm text-gray-400">...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                Next &raquo;
+            </a>
+        {% else %}
+            <span class="px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-semibold text-gray-300 cursor-not-allowed">
+                Next &raquo;
+            </span>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+    <p>Menampilkan <span class="font-bold text-gray-900">{{ page_obj.paginator.count|default:page_obj|length }}</span> data</p>
+</div>
+{% endif %}

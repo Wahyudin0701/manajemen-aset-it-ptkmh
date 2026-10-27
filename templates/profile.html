@@ -1,0 +1,124 @@
+﻿{% extends 'base.html' %}
+
+{% block page_title %}Profil Saya{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Pengaturan Profil</h2>
+    <p class="text-sm text-gray-500">Kelola informasi pribadi dan pengaturan keamanan akun Anda.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Kolom Kiri: Info Umum -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col items-center text-center">
+            <div class="w-32 h-32 bg-kerinci-light text-kerinci rounded-full flex items-center justify-center font-extrabold text-5xl mb-6 shadow-sm border-4 border-white ring-1 ring-gray-100">
+                {{ request.user.first_name|default:request.user.username|first|upper }}
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h3>
+            <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mt-1">Administrator Sistem</p>
+            
+            <div class="w-full h-px bg-gray-100 my-6"></div>
+            
+            <div class="w-full flex justify-between items-center text-sm">
+                <span class="text-gray-500">Status Akun</span>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full font-bold text-xs">Aktif</span>
+            </div>
+            <div class="w-full flex justify-between items-center text-sm mt-3">
+                <span class="text-gray-500">Terdaftar pada</span>
+                <span class="font-bold text-gray-700">{{ request.user.date_joined|date:"d M Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kolom Kanan: Form Edit -->
+    <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Form Informasi Pribadi -->
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <h3 class="text-lg font-extrabold text-gray-900">Informasi Pribadi</h3>
+            </div>
+            
+            <form action="{% url 'profile' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_info">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nama Depan (Atau Peran)</label>
+                        <input type="text" name="first_name" value="{{ request.user.first_name }}" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light transition-all bg-gray-50" placeholder="Contoh: Admin IT">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nama Belakang (Atau Divisi)</label>
+                        <input type="text" name="last_name" value="{{ request.user.last_name }}" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light transition-all bg-gray-50" placeholder="Contoh: PT. KMH">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username (Login)</label>
+                        <input type="text" name="username" value="{{ request.user.username }}" required class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light transition-all bg-gray-50 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Email</label>
+                        <input type="email" name="email" value="{{ request.user.email }}" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-2 focus:ring-kerinci-light transition-all bg-gray-50" placeholder="admin@ptkmh.com">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-3 bg-kerinci text-white font-bold rounded-xl text-sm shadow-sm shadow-kerinci/30 hover:bg-kerinci-dark hover:shadow-md transition-all flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Simpan Perubahan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Form Keamanan Akun -->
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h3 class="text-lg font-extrabold text-gray-900">Keamanan & Password</h3>
+            </div>
+            
+            <form action="{% url 'profile' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_password">
+                
+                <div class="space-y-6 mb-8">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Password Saat Ini</label>
+                        <input type="password" name="old_password" required class="w-full max-w-md px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all bg-gray-50" placeholder="••••••••">
+                    </div>
+                    
+                    <div class="h-px w-full max-w-md bg-gray-100"></div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Password Baru</label>
+                        <input type="password" name="new_password" required minlength="6" class="w-full max-w-md px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all bg-gray-50" placeholder="Minimal 6 karakter">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Konfirmasi Password Baru</label>
+                        <input type="password" name="confirm_password" required minlength="6" class="w-full max-w-md px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all bg-gray-50" placeholder="Ketik ulang password baru">
+                    </div>
+                </div>
+                
+                <div class="flex justify-start">
+                    <button type="submit" class="px-6 py-3 bg-amber-500 text-white font-bold rounded-xl text-sm shadow-sm shadow-amber-500/30 hover:bg-amber-600 hover:shadow-md transition-all flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        <span>Perbarui Password</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

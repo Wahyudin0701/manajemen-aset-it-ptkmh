@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ ci.ci_code }} &bull; {{ ci.name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb & Header -->
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
+    <div>
+        <div class="flex items-center space-x-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+            <a href="{% url 'ci_list' %}" class="hover:text-kerinci transition-colors">Configuration Item</a>
+            <span>&bull;</span>
+            <span class="text-kerinci">Detail Komponen</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <h2 class="text-3xl font-black text-gray-900 font-mono">{{ ci.ci_code }}</h2>
+            {% if ci.status == 'available' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Tersedia</span>
+            {% elif ci.status == 'in_use' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">Digunakan</span>
+            {% elif ci.status == 'under_repair' or ci.status == 'under_inspection' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Perbaikan</span>
+            {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200">Bricked</span>
+            {% endif %}
+        </div>
+        <p class="text-base font-bold text-gray-700 mt-1">{{ ci.name }}</p>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="flex items-center space-x-2">
+        <a href="{% url 'ci_list' %}" class="px-4 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+            &larr; Kembali
+        </a>
+        {% if not is_read_only %}
+        <button onclick="openEditModal()" class="px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-xl text-sm font-bold transition-colors flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <span>Edit Data</span>
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Kolom Kiri: Relasi Aktif & Spesifikasi Komponen -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Status Relasi Aktif -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 class="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Relasi & Penempatan Aktif</h3>
+
+            {% if ci.installed_on %}
+                <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+                    <div class="flex items-center space-x-2 text-blue-700 font-extrabold text-sm mb-1">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <span>Terpasang Pada Perangkat</span>
+                    </div>
+                    <p class="text-lg font-black text-gray-900 mt-2 font-mono">{{ ci.installed_on.unit_code }}</p>
+                    <p class="text-xs text-gray-600 font-semibold">{{ ci.installed_on.asset.name }}</p>
+                    <div class="mt-3 pt-3 border-t border-blue-100/70 text-xs text-gray-600 space-y-1">
+                        <p><span class="font-bold text-gray-500">Pengguna (PIC):</span> <strong class="text-gray-900">{{ ci.installed_on.assigned_to.name|default:"Tidak terikat karyawan" }}</strong></p>
+                        {% if ci.installed_on.area %}
+                        <p><span class="font-bold text-gray-500">Area:</span> {{ ci.installed_on.area }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% elif ci.assigned_to %}
+                <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-100">
+                    <div class="flex items-center space-x-2 text-purple-700 font-extrabold text-sm mb-1">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span>Dialokasikan ke Karyawan</span>
+                    </div>
+                    <p class="text-lg font-black text-gray-900 mt-2">{{ ci.assigned_to.name }}</p>
+                    <p class="text-xs text-gray-500">NIK: {{ ci.assigned_to.nik }} &bull; {{ ci.assigned_to.position|default:"Staff" }}</p>
+                </div>
+            {% elif ci.status == 'available' %}
+                <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-100">
+                    <div class="flex items-center space-x-2 text-emerald-700 font-extrabold text-sm mb-1">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                        <span>Tersedia di Gudang IT</span>
+                    </div>
+                    <p class="text-sm font-bold text-gray-900 mt-2">Lokasi: {{ ci.location|default:"Gudang Induk (GI)" }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Komponen siap dipasang ke perangkat atau dialokasikan.</p>
+                </div>
+            {% else %}
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <p class="text-sm font-bold text-gray-700">Status: {{ ci.get_status_display }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Lokasi saat ini: {{ ci.location|default:"-" }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Spesifikasi & Identitas Teknis -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 class="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Informasi Spesifikasi</h3>
+            <dl class="space-y-3 text-sm">
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Kategori</dt>
+                    <dd class="text-gray-900 font-semibold">{{ ci.get_category_display }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Merek & Model</dt>
+                    <dd class="text-gray-900 font-semibold">{{ ci.brand|default:"-" }} {{ ci.model_series|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Nomor Seri (S/N)</dt>
+                    <dd class="text-gray-900 font-mono text-xs font-bold">{{ ci.serial_number|default:"-" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Kondisi Fisik</dt>
+                    <dd class="text-gray-900 font-semibold">{{ ci.get_condition_display }}</dd>
+                </div>
+                {% if ci.specifications %}
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Spesifikasi Detail</dt>
+                    <dd class="text-gray-700 text-xs bg-gray-50 p-3 rounded-xl mt-1 font-mono whitespace-pre-wrap">{{ ci.specifications }}</dd>
+                </div>
+                {% endif %}
+                {% if ci.warranty_expiry %}
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Garansi Berlaku Hingga</dt>
+                    <dd class="text-gray-900 font-semibold">{{ ci.warranty_expiry|date:"d M Y" }}</dd>
+                </div>
+                {% endif %}
+                {% if ci.notes %}
+                <div>
+                    <dt class="text-xs font-bold text-gray-400">Catatan Internal</dt>
+                    <dd class="text-gray-600 text-xs mt-0.5">{{ ci.notes }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Kolom Kanan: Timeline Riwayat Siklus Hidup (Audit Trail) -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                <div>
+                    <h3 class="text-lg font-black text-gray-900">Timeline Riwayat Perjalanan Komponen</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Audit log kronologis pemasangan, mutasi, pelepasan, dan perbaikan komponen.</p>
+                </div>
+                <span class="text-xs font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                    {{ history_logs|length }} Catatan
+                </span>
+            </div>
+
+            <!-- Timeline List -->
+            <div class="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gray-100">
+                {% for log in history_logs %}
+                <div class="relative group">
+                    <!-- Bullet Icon -->
+                    <div class="absolute -left-6 top-1 w-5 h-5 rounded-full border-2 border-white 
+                        {% if log.action == 'installed' %}bg-blue-600 shadow-sm shadow-blue-500/30
+                        {% elif log.action == 'removed' %}bg-amber-500 shadow-sm shadow-amber-500/30
+                        {% elif log.action == 'replaced' %}bg-purple-600 shadow-sm shadow-purple-500/30
+                        {% elif log.action == 'repair_in' %}bg-red-500 shadow-sm shadow-red-500/30
+                        {% elif log.action == 'repair_out' %}bg-emerald-500 shadow-sm shadow-emerald-500/30
+                        {% else %}bg-gray-400{% endif %}">
+                    </div>
+
+                    <div class="bg-gray-50/70 hover:bg-gray-50 p-4 rounded-xl border border-gray-100 transition-colors">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
+                            <span class="text-xs font-extrabold uppercase tracking-wider
+                                {% if log.action == 'installed' %}text-blue-700
+                                {% elif log.action == 'removed' %}text-amber-700
+                                {% elif log.action == 'replaced' %}text-purple-700
+                                {% elif log.action == 'repair_in' %}text-red-700
+                                {% elif log.action == 'repair_out' %}text-emerald-700
+                                {% else %}text-gray-700{% endif %}">
+                                {{ log.get_action_display }}
+                            </span>
+                            <span class="text-[11px] text-gray-400 font-medium">
+                                {{ log.timestamp|date:"d M Y, H:i" }}
+                            </span>
+                        </div>
+
+                        <p class="text-xs text-gray-800 leading-relaxed font-medium">{{ log.notes|default:"-" }}</p>
+
+                        <div class="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                            {% if log.related_unit %}
+                                <span>Perangkat: <strong class="text-gray-700">{{ log.related_unit.unit_code }}</strong></span>
+                            {% elif log.related_employee %}
+                                <span>Karyawan: <strong class="text-gray-700">{{ log.related_employee.name }}</strong></span>
+                            {% else %}
+                                <span></span>
+                            {% endif %}
+                            <span>Oleh: <strong class="text-gray-700">{{ log.performed_by.username|default:"Sistem" }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-400 text-xs">
+                    Belum ada riwayat tercatat untuk komponen ini.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Data CI -->
+<div id="editCIModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-[90%] max-w-xl max-h-[90vh] overflow-y-auto relative z-10 p-6 sm:p-8">
+        <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-100">
+            <h3 class="text-xl font-extrabold text-gray-900">Edit Data {{ ci.ci_code }}</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form action="{% url 'ci_edit' ci.id %}" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nama Item</label>
+                <input type="text" name="name" value="{{ ci.name }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Merek</label>
+                    <input type="text" name="brand" value="{{ ci.brand|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Model / Seri</label>
+                    <input type="text" name="model_series" value="{{ ci.model_series|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nomor Seri (S/N)</label>
+                    <input type="text" name="serial_number" value="{{ ci.serial_number|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Kondisi Fisik</label>
+                    <select name="condition" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+                        <option value="new" {% if ci.condition == 'new' %}selected{% endif %}>Baru (New)</option>
+                        <option value="good" {% if ci.condition == 'good' %}selected{% endif %}>Bagus / Normal (Good)</option>
+                        <option value="fair" {% if ci.condition == 'fair' %}selected{% endif %}>Cukup / Bekas (Fair)</option>
+                        <option value="damaged" {% if ci.condition == 'damaged' %}selected{% endif %}>Rusak (Damaged)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Lokasi Penyimpanan</label>
+                <input type="text" name="location" value="{{ ci.location|default:'' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Spesifikasi Teknis</label>
+                <textarea name="specifications" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci bg-white font-mono">{{ ci.specifications|default:'' }}</textarea>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl text-sm hover:bg-gray-50">Batal</button>
+                <button type="submit" class="px-6 py-2.5 bg-amber-500 text-white font-bold rounded-xl text-sm hover:bg-amber-600">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal() {
+        document.getElementById('editCIModal').classList.remove('hidden');
+    }
+    function closeEditModal() {
+        document.getElementById('editCIModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}
