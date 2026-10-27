@@ -116,30 +116,30 @@
 <!-- Main Data Table -->
 <div class="bg-white rounded-none sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left border-collapse min-w-[1050px]">
             <thead>
-                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
-                    <th class="p-4 font-bold text-center w-16">No</th>
-                    <th class="p-4 font-bold w-36">Kode Item</th>
-                    <th class="p-4 font-bold min-w-[220px]">Nama & Komponen</th>
-                    <th class="p-4 font-bold">Kategori</th>
-                    <th class="p-4 font-bold">Nomor Seri (S/N)</th>
-                    <th class="p-4 font-bold min-w-[200px]">Perangkat / Pengguna</th>
-                    <th class="p-4 font-bold text-center">Kondisi</th>
-                    <th class="p-4 font-bold text-center">Status</th>
-                    <th class="p-4 font-bold text-center w-36">Aksi</th>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-wider">
+                    <th class="p-4 font-bold text-center w-14 whitespace-nowrap">No</th>
+                    <th class="p-4 font-bold whitespace-nowrap">Kode Item</th>
+                    <th class="p-4 font-bold min-w-[200px]">Nama & Komponen</th>
+                    <th class="p-4 font-bold whitespace-nowrap">Kategori</th>
+                    <th class="p-4 font-bold whitespace-nowrap">Nomor Seri (S/N)</th>
+                    <th class="p-4 font-bold min-w-[180px]">Perangkat / Pengguna</th>
+                    <th class="p-4 font-bold text-center whitespace-nowrap">Kondisi</th>
+                    <th class="p-4 font-bold text-center whitespace-nowrap">Status</th>
+                    <th class="p-4 font-bold text-center w-28 whitespace-nowrap">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-sm divide-y divide-gray-200">
                 {% for item in items %}
                 <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="p-4 text-center text-gray-500">{{ forloop.counter }}</td>
-                    <td class="p-4 font-bold text-gray-700 font-mono text-xs">
+                    <td class="p-4 text-center text-gray-500 whitespace-nowrap">{{ forloop.counter }}</td>
+                    <td class="p-4 font-bold text-gray-700 font-mono text-xs whitespace-nowrap">
                         <a href="{% url 'ci_detail' item.id %}" class="hover:text-kerinci transition-colors">
                             {{ item.ci_code }}
                         </a>
                     </td>
-                    <td class="p-4">
+                    <td class="p-4 min-w-[200px]">
                         <a href="{% url 'ci_detail' item.id %}" class="font-bold text-gray-900 hover:text-kerinci transition-colors block">
                             {{ item.name }}
                         </a>
@@ -147,51 +147,62 @@
                         <p class="text-xs text-gray-500 font-normal mt-0.5">{{ item.brand|default:"" }} {{ item.model_series|default:"" }}</p>
                         {% endif %}
                     </td>
-                    <td class="p-4 text-gray-600 font-medium text-xs">
-                        {{ item.get_category_display }}
+                    <td class="p-4 text-gray-600 font-medium text-xs whitespace-nowrap">
+                        {% if item.category == 'storage' %}Storage
+                        {% elif item.category == 'memory' %}Memory (RAM)
+                        {% elif item.category == 'processor' %}Processor (CPU)
+                        {% elif item.category == 'motherboard' %}Motherboard
+                        {% elif item.category == 'gpu' %}GPU / VGA
+                        {% elif item.category == 'peripheral' %}Peripheral
+                        {% elif item.category == 'network' %}Network Component
+                        {% elif item.category == 'power' %}Power Supply & UPS
+                        {% else %}{{ item.get_category_display }}
+                        {% endif %}
                     </td>
-                    <td class="p-4 text-gray-600 font-mono text-xs">
+                    <td class="p-4 text-gray-600 font-mono text-xs whitespace-nowrap">
                         {{ item.serial_number|default:"-" }}
                     </td>
-                    <td class="p-4">
+                    <td class="p-4 min-w-[180px]">
                         {% if item.installed_on %}
                             <div class="flex items-center space-x-1.5 text-xs text-gray-800">
-                                <span class="font-bold text-blue-700 font-mono">{{ item.installed_on.unit_code }}</span>
+                                <span class="font-bold text-blue-700 font-mono whitespace-nowrap">{{ item.installed_on.unit_code }}</span>
                             </div>
-                            <p class="text-[11px] text-gray-500 truncate" title="{{ item.installed_on.asset.name }}">{{ item.installed_on.asset.name }}</p>
+                            <p class="text-[11px] text-gray-500 truncate max-w-[200px]" title="{{ item.installed_on.asset.name }}">{{ item.installed_on.asset.name }}</p>
                             {% if item.installed_on.assigned_to %}
-                            <p class="text-[10px] text-gray-400 font-medium">PIC: {{ item.installed_on.assigned_to.name }}</p>
+                            <p class="text-[10px] text-gray-400 font-medium whitespace-nowrap">PIC: {{ item.installed_on.assigned_to.name }}</p>
                             {% endif %}
                         {% elif item.assigned_to %}
-                            <p class="font-bold text-xs text-gray-800">{{ item.assigned_to.name }}</p>
-                            <p class="text-[11px] text-gray-500">Pegang Langsung</p>
+                            <p class="font-bold text-xs text-gray-800 whitespace-nowrap">{{ item.assigned_to.name }}</p>
+                            <p class="text-[11px] text-gray-500 whitespace-nowrap">Pegang Langsung</p>
                         {% else %}
-                            <span class="text-xs text-gray-400 italic">Gudang / Tidak terpasang</span>
+                            <span class="text-xs text-gray-400 italic whitespace-nowrap">Gudang / Tidak terpasang</span>
                         {% endif %}
                     </td>
-                    <td class="p-4 text-center">
-                        {% if item.condition == 'new' or item.condition == 'good' %}
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{{ item.get_condition_display }}</span>
+                    <td class="p-4 text-center whitespace-nowrap">
+                        {% if item.condition == 'new' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">Baru</span>
+                        {% elif item.condition == 'good' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">Bagus / Normal</span>
                         {% elif item.condition == 'fair' %}
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">{{ item.get_condition_display }}</span>
-                        {% elif item.condition == 'poor' %}
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">{{ item.get_condition_display }}</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">Cukup / Bekas</span>
+                        {% elif item.condition == 'damaged' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">Rusak</span>
                         {% else %}
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">{{ item.get_condition_display }}</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 whitespace-nowrap">{{ item.get_condition_display }}</span>
                         {% endif %}
                     </td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center whitespace-nowrap">
                         {% if item.status == 'available' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Tersedia</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">Tersedia</span>
                         {% elif item.status == 'in_use' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">Digunakan</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">Digunakan</span>
                         {% elif item.status == 'under_repair' or item.status == 'under_inspection' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Maintenance</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">Maintenance</span>
                         {% else %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200">Pensiun</span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200 whitespace-nowrap">Pensiun</span>
                         {% endif %}
                     </td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center space-x-1.5">
                             <a href="{% url 'ci_detail' item.id %}" class="p-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200" title="Detail & Riwayat">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
