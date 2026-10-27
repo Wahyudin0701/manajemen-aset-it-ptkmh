@@ -876,20 +876,38 @@ def consumable_export_excel(request):
 
 @login_required
 def consumable_export_pdf(request):
-    """Menghasilkan laporan PDF ringkasan status persediaan consumable."""
+    """Menghasilkan laporan PDF resmi untuk Consumable Item yang seragam dengan modul lainnya."""
+    import os
+    import datetime
+    from io import BytesIO
+    from PIL import Image
+
+    from django.conf import settings
+    from django.http import HttpResponse
+    from django.db.models import Q, F
+
     from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.units import mm
-    from reportlab.lib.colors import HexColor, white, black
+    from reportlab.lib.units import mm, cm
+    from reportlab.lib.colors import HexColor, white
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus.flowables import HRFlowable
+    from reportlab.platypus import Image as RLImage
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-    from io import BytesIO
 
     search_query = request.GET.get('q', '').strip()
     category_filter = request.GET.get('category', '').strip()
     status_filter = request.GET.get('status', '').strip()
+    location_filter = request.GET.get('location', '').strip()
 
     items_qs = ConsumableItem.objects.all().order_by('category', 'name')
+
+    status_labels = {
+        'available': 'Stok Aman',
+        'low_stock': 'Stok Menipis',
+        'out_of_stock': 'Stok Habis',
+    }
+    status_label = status_labels.get(status_filter, 'Semua Status')
 
     if status_filter == 'available':
         items_qs = items_qs.filter(stock_available__gt=F('minimum_stock'))
@@ -898,8 +916,13 @@ def consumable_export_pdf(request):
     elif status_filter == 'out_of_stock':
         items_qs = items_qs.filter(stock_available__lte=0)
 
+    cat_dict = dict(ConsumableItem.CATEGORY_CHOICES)
+    cat_label = cat_dict.get(category_filter, 'Semua Kategori') if category_filter else 'Semua Kategori'
     if category_filter:
         items_qs = items_qs.filter(category=category_filter)
+
+    if location_filter:
+        items_qs = items_qs.filter(location=location_filter)
 
     if search_query:
         items_qs = items_qs.filter(
@@ -909,116 +932,200 @@ def consumable_export_pdf(request):
             Q(specification__icontains=search_query)
         )
 
+    navy = HexColor('#002060')
+    alt_row = HexColor('#F8F9FC')
+    border_color = HexColor('#D0D5DD')
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
         pagesize=landscape(A4),
-        rightMargin=12 * mm,
-        leftMargin=12 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm
+        leftMargin=1.5 * cm,
+        rightMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=2 * cm
     )
+    page_width = landscape(A4)[0] - 3 * cm
 
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=15,
-        leading=18,
-        textColor=HexColor('#1b5e20'),
-        alignment=TA_LEFT
-    )
-    meta_style = ParagraphStyle(
-        'DocMeta',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=8,
-        leading=11,
-        textColor=HexColor('#555555'),
-        alignment=TA_LEFT
-    )
-    cell_style = ParagraphStyle(
-        'CellText',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=8,
-        leading=10,
-        alignment=TA_LEFT
-    )
-    cell_center = ParagraphStyle(
-        'CellCenter',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=8,
-        leading=10,
-        alignment=TA_CENTER
-    )
-    header_style = ParagraphStyle(
-        'HeaderCell',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=8,
-        leading=10,
-        textColor=white,
-        alignment=TA_CENTER
-    )
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=16, textColor=white, leading=20)
+    subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Normal'], fontName='Helvetica', fontSize=10, textColor=HexColor('#B0C4DE'), leading=14)
+    company_style = ParagraphStyle('CompanyName', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=11, textColor=white, alignment=TA_RIGHT, leading=14)
+    company_sub_style = ParagraphStyle('CompanySub', parent=styles['Normal'], fontName='Helvetica', fontSize=8, textColor=HexColor('#B0C4DE'), alignment=TA_RIGHT, leading=11)
 
-    story = []
-    story.append(Paragraph("LAPORAN PERSEDIAAN CONSUMABLE ITEM - PT. KERINCI HYDROPOWER", title_style))
-    story.append(Spacer(1, 2 * mm))
-    story.append(Paragraph(
-        f"Dicetak: {datetime.now().strftime('%d/%m/%Y %H:%M')} WIB | Oleh: {request.user.get_full_name() or request.user.username} | Total: {items_qs.count()} item",
-        meta_style
-    ))
-    story.append(Spacer(1, 5 * mm))
+    cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=8.5, leading=11)
+    cell_bold_style = ParagraphStyle('CellBoldStyle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=11)
+    cell_small = ParagraphStyle('CellSmall', parent=styles['Normal'], fontName='Helvetica', fontSize=7.5, textColor=HexColor('#666666'), leading=9)
+    header_cell = ParagraphStyle('HeaderCell', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8, textColor=white, alignment=TA_CENTER, leading=11)
+    cell_center = ParagraphStyle('CellCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=8.5, alignment=TA_CENTER)
+    info_style = ParagraphStyle('InfoStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=9, textColor=HexColor('#555555'))
+    info_bold = ParagraphStyle('InfoBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=HexColor('#333333'))
 
-    table_data = [[
-        Paragraph("No", header_style),
-        Paragraph("Kode", header_style),
-        Paragraph("Nama Barang", header_style),
-        Paragraph("Kategori", header_style),
-        Paragraph("Merek & Spesifikasi", header_style),
-        Paragraph("Satuan", header_style),
-        Paragraph("Stok", header_style),
-        Paragraph("Min", header_style),
-        Paragraph("Status", header_style),
-        Paragraph("Lokasi", header_style),
+    elements = []
+    now = datetime.datetime.now()
+    bulan_indo = {
+        1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April',
+        5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus',
+        9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+    }
+    tanggal_str = f"{now.day} {bulan_indo[now.month]} {now.year}"
+
+    # Top Logos
+    try:
+        it_logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'it_all_role_logo.png')
+        kerinci_logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'kerinci_logo.png')
+        desired_height = 1.3 * cm
+        it_img = Image.open(it_logo_path)
+        it_rl_img = RLImage(it_logo_path, width=desired_height * (it_img.width / float(it_img.height)), height=desired_height)
+        ker_img = Image.open(kerinci_logo_path)
+        ker_rl_img = RLImage(kerinci_logo_path, width=desired_height * (ker_img.width / float(ker_img.height)), height=desired_height)
+        logo_table = Table([[ker_rl_img, it_rl_img]], colWidths=[page_width/2, page_width/2])
+        logo_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 0)
+        ]))
+        elements.append(logo_table)
+    except Exception:
+        pass
+
+    category_label = f"Status: {status_label} - Kategori: {cat_label}"
+
+    # Navy Header Banner
+    header_data = [[
+        [Paragraph('Laporan Consumable Item', title_style), Paragraph(f'{category_label} - {tanggal_str}', subtitle_style)],
+        [Paragraph('SISTEM MANAJEMEN ASET IT', company_style), Paragraph('Dicetak otomatis dari sistem', company_sub_style)]
     ]]
+    header_table = Table(header_data, colWidths=[page_width * 0.65, page_width * 0.35])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), navy),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (0, 0), 20),
+        ('RIGHTPADDING', (-1, -1), (-1, -1), 20),
+        ('TOPPADDING', (0, 0), (-1, -1), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 14),
+        ('ROUNDEDCORNERS', [6, 6, 0, 0]),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 8 * mm))
+
+    # Metadata Grid
+    total_data = items_qs.count()
+    info_data = [
+        [Paragraph('Kategori', info_style), Paragraph(f': {category_label}', info_bold), Paragraph('Total Data', info_style), Paragraph(f': {total_data} item', info_bold)]
+    ]
+    row_2 = [Paragraph('Tanggal Cetak', info_style), Paragraph(f': {tanggal_str}, {now.strftime("%H:%M")} WIB', info_bold)]
+    filters_desc = []
+    if location_filter: filters_desc.append(f"Lokasi: {location_filter}")
+    if search_query: filters_desc.append(f"Cari: '{search_query}'")
+    if filters_desc:
+        row_2.extend([Paragraph('Filter', info_style), Paragraph(f': {", ".join(filters_desc)}', info_bold)])
+    else:
+        row_2.extend(['', ''])
+    info_data.append(row_2)
+
+    info_table = Table(info_data, colWidths=[page_width * 0.12, page_width * 0.38, page_width * 0.12, page_width * 0.38])
+    info_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0)
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 6 * mm))
+    elements.append(HRFlowable(width="100%", thickness=1, color=border_color, spaceAfter=4 * mm))
+
+    # Table Header & Data
+    table_header = [
+        Paragraph('NO', header_cell),
+        Paragraph('KODE ITEM', header_cell),
+        Paragraph('NAMA BARANG & MEREK', header_cell),
+        Paragraph('KATEGORI', header_cell),
+        Paragraph('SPESIFIKASI', header_cell),
+        Paragraph('SATUAN', header_cell),
+        Paragraph('STOK', header_cell),
+        Paragraph('STATUS', header_cell),
+        Paragraph('LOKASI', header_cell)
+    ]
+    col_widths = [
+        page_width * 0.05,
+        page_width * 0.13,
+        page_width * 0.24,
+        page_width * 0.12,
+        page_width * 0.18,
+        page_width * 0.06,
+        page_width * 0.07,
+        page_width * 0.07,
+        page_width * 0.08
+    ]
+    table_data = [table_header]
 
     for idx, itm in enumerate(items_qs, 1):
-        status_text = itm.stock_status_display
-        status_color = "#1b5e20" if itm.stock_status == 'available' else ("#e65100" if itm.stock_status == 'low_stock' else "#c62828")
-        status_cell = f"<font color='{status_color}'><b>{status_text}</b></font>"
+        item_info = [Paragraph(itm.name, cell_bold_style)]
+        if itm.brand:
+            item_info.append(Paragraph(f"Merek: {itm.brand}", cell_small))
 
-        table_data.append([
+        status_text = "Aman" if itm.stock_status == 'available' else ("Menipis" if itm.stock_status == 'low_stock' else "Habis")
+
+        row = [
             Paragraph(str(idx), cell_center),
-            Paragraph(itm.item_code, cell_center),
-            Paragraph(itm.name, cell_style),
-            Paragraph(itm.get_category_display().split('(')[0].strip(), cell_style),
-            Paragraph(f"{itm.brand or '-'} / {itm.specification or '-'}", cell_style),
+            Paragraph(itm.item_code, cell_bold_style),
+            item_info,
+            Paragraph(itm.get_category_display().split('(')[0].strip(), cell_center),
+            Paragraph(itm.specification or "-", cell_small),
             Paragraph(itm.base_unit, cell_center),
-            Paragraph(f"<b>{itm.stock_available}</b>", cell_center),
-            Paragraph(str(itm.minimum_stock), cell_center),
-            Paragraph(status_cell, cell_center),
-            Paragraph(itm.location, cell_style),
+            Paragraph(f"<b>{itm.formatted_stock}</b>", cell_center),
+            Paragraph(status_text, cell_center),
+            Paragraph(itm.location or "-", cell_center)
+        ]
+        table_data.append(row)
+
+    if total_data == 0:
+        table_data.append([
+            Paragraph("Belum ada data Consumable Item yang cocok dengan kriteria laporan.", cell_center),
+            "", "", "", "", "", "", "", ""
         ])
 
-    col_widths = [10 * mm, 25 * mm, 50 * mm, 38 * mm, 50 * mm, 16 * mm, 18 * mm, 16 * mm, 22 * mm, 28 * mm]
-    t = Table(table_data, colWidths=col_widths, repeatRows=1)
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1b5e20')),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    data_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), navy),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#e0e0e0')),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-    ]))
-    story.append(t)
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, navy),
+        ('LINEBELOW', (0, 1), (-1, -2), 0.5, HexColor('#E5E7EB')),
+        ('LINEBELOW', (0, -1), (-1, -1), 1, border_color),
+    ]
+    if total_data == 0:
+        table_style.append(('SPAN', (0, 1), (-1, 1)))
+        table_style.append(('ALIGN', (0, 1), (-1, 1), 'CENTER'))
+        table_style.append(('TOPPADDING', (0, 1), (-1, 1), 16))
+        table_style.append(('BOTTOMPADDING', (0, 1), (-1, 1), 16))
+    else:
+        for i in range(1, len(table_data)):
+            if i % 2 == 0:
+                table_style.append(('BACKGROUND', (0, i), (-1, i), alt_row))
 
-    doc.build(story)
+    data_table.setStyle(TableStyle(table_style))
+    elements.append(data_table)
+
+    elements.append(Spacer(1, 5 * mm))
+    elements.append(Paragraph(
+        f"Menampilkan {total_data} item — Dokumen ini digenerate secara otomatis oleh Sistem Manajemen Aset IT pada {tanggal_str}.",
+        ParagraphStyle('F', parent=styles['Normal'], fontName='Helvetica', fontSize=8, textColor=HexColor('#999999'))
+    ))
+
+    doc.build(elements)
     buffer.seek(0)
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    filename = f"Laporan_Consumable_PTKMH_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    filename = f"Laporan_Consumable_Item_{now.strftime('%Y%m%d')}.pdf"
     response['Content-Disposition'] = f'inline; filename="{filename}"'
     return response
