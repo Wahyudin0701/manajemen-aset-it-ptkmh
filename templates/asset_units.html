@@ -12,14 +12,16 @@
         </div>
         <p class="text-sm text-gray-500 mt-1">Kode: <strong>{{ asset.asset_code }}</strong> &middot; Total: <strong>{{ asset.qty }} {{ asset.uom }}</strong></p>
     </div>
-    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-        <a href="{% url 'asset_list' %}" class="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-1 sm:flex-none">
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+        <!-- Tombol Kembali: Desktop paling kiri (sm:order-1), Mobile di bawah (order-3 w-full) -->
+        <a href="{% url 'asset_list' %}" class="order-3 sm:order-1 bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-kerinci transition-colors flex items-center space-x-2 justify-center text-center w-full sm:w-auto flex-none">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             <span>Kembali</span>
         </a>
         
-        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
-            <button onclick="var d = document.getElementById('exportMenuUnits'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
+        <!-- Fitur Ekspor: Desktop tengah (sm:order-2), Mobile baris atas kiri (order-1 flex-1) -->
+        <div class="order-1 sm:order-2 relative inline-block flex-1 sm:flex-none w-auto">
+            <button onclick="var d = document.getElementById('exportMenuUnits'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center whitespace-nowrap">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Ekspor Data</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -37,7 +39,8 @@
             </div>
         </div>
         
-        <button onclick="openAddUnitModal()" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto flex-1 sm:flex-none">
+        <!-- Tombol Tambah Unit: Desktop paling kanan (sm:order-3), Mobile baris atas kanan (order-2 flex-1) -->
+        <button onclick="openAddUnitModal()" class="order-2 sm:order-3 bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center justify-center space-x-2 flex-1 sm:flex-none whitespace-nowrap">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <span>Tambah Unit</span>
         </button>
