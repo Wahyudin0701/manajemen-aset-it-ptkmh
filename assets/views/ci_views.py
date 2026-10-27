@@ -3,7 +3,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import transaction
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
@@ -496,3 +496,258 @@ def ci_report_damage(request, ci_id):
             messages.success(request, f'Komponen {ci.ci_code} selesai diperbaiki dan siap digunakan.')
 
     return redirect(request.META.get('HTTP_REFERER', 'ci_list'))
+
+
+@login_required
+def ci_export_excel(request):
+    """Menghasilkan laporan Excel profesional untuk katalog Configuration Item."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    category_filter = request.GET.get('category', '').strip()
+    condition_filter = request.GET.get('condition', '').strip()
+
+    ci_qs = ConfigurationItem.objects.select_related(
+        'installed_on', 'installed_on__asset', 'installed_on__assigned_to', 'assigned_to'
+    ).order_by('category', 'ci_code')
+
+    if status_filter:
+        if status_filter == 'repair':
+            ci_qs = ci_qs.filter(status__in=['under_inspection', 'under_repair'])
+        else:
+            ci_qs = ci_qs.filter(status=status_filter)
+
+    if category_filter:
+        ci_qs = ci_qs.filter(category=category_filter)
+
+    if condition_filter:
+        ci_qs = ci_qs.filter(condition=condition_filter)
+
+    if search_query:
+        ci_qs = ci_qs.filter(
+            Q(ci_code__icontains=search_query) |
+            Q(name__icontains=search_query) |
+            Q(brand__icontains=search_query) |
+            Q(model_series__icontains=search_query) |
+            Q(serial_number__icontains=search_query) |
+            Q(specifications__icontains=search_query) |
+            Q(installed_on__unit_code__icontains=search_query) |
+            Q(assigned_to__name__icontains=search_query)
+        )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Katalog CI"
+
+    title_font = Font(size=14, bold=True, color="002060")
+    subtitle_font = Font(size=10, italic=True, color="555555")
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="002060", end_color="002060", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(horizontal="left", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin', color='CCCCCC'),
+        right=Side(style='thin', color='CCCCCC'),
+        top=Side(style='thin', color='CCCCCC'),
+        bottom=Side(style='thin', color='CCCCCC')
+    )
+
+    ws.merge_cells('A1:J1')
+    ws['A1'] = "LAPORAN CONFIGURATION ITEM (CI) - PT. KERINCI HYDROPOWER"
+    ws['A1'].font = title_font
+    ws['A1'].alignment = left_align
+
+    ws.merge_cells('A2:J2')
+    ws['A2'] = f"Tanggal Ekspor: {datetime.now().strftime('%d %B %Y %H:%M')} WIB | Dicetak oleh: {request.user.get_full_name() or request.user.username}"
+    ws['A2'].font = subtitle_font
+    ws['A2'].alignment = left_align
+
+    headers = [
+        "No", "Kode CI", "Nama Komponen", "Kategori", "Merek & Model",
+        "Nomor Seri (S/N)", "Status", "Kondisi", "Perangkat Terpasang", "PIC / Pengguna"
+    ]
+    ws.append([])
+    ws.append(headers)
+
+    for col_idx in range(1, len(headers) + 1):
+        cell = ws.cell(row=4, column=col_idx)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+
+    for idx, ci in enumerate(ci_qs, 1):
+        installed = f"{ci.installed_on.unit_code} ({ci.installed_on.asset.name})" if ci.installed_on else "-"
+        pic = ci.assigned_to.name if ci.assigned_to else (ci.installed_on.assigned_to.name if ci.installed_on and ci.installed_on.assigned_to else "-")
+        row = [
+            idx,
+            ci.ci_code,
+            ci.name,
+            ci.get_category_display(),
+            f"{ci.brand or ''} {ci.model_series or ''}".strip() or "-",
+            ci.serial_number or "-",
+            ci.get_status_display(),
+            ci.get_condition_display(),
+            installed,
+            pic
+        ]
+        ws.append(row)
+        curr_row = ws.max_row
+        for col_idx in range(1, len(headers) + 1):
+            c = ws.cell(row=curr_row, column=col_idx)
+            c.border = thin_border
+            if col_idx in [1, 2, 7, 8]:
+                c.alignment = center_align
+            else:
+                c.alignment = left_align
+
+    col_widths = {'A': 6, 'B': 18, 'C': 26, 'D': 16, 'E': 20, 'F': 20, 'G': 16, 'H': 14, 'I': 24, 'J': 22}
+    for col, width in col_widths.items():
+        ws.column_dimensions[col].width = width
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"laporan_configuration_item_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def ci_export_pdf(request):
+    """Menghasilkan laporan PDF ringkasan status Configuration Item."""
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.units import mm
+    from reportlab.lib.colors import HexColor, white
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from io import BytesIO
+
+    search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    category_filter = request.GET.get('category', '').strip()
+    condition_filter = request.GET.get('condition', '').strip()
+
+    ci_qs = ConfigurationItem.objects.select_related(
+        'installed_on', 'installed_on__asset', 'installed_on__assigned_to', 'assigned_to'
+    ).order_by('category', 'ci_code')
+
+    if status_filter:
+        if status_filter == 'repair':
+            ci_qs = ci_qs.filter(status__in=['under_inspection', 'under_repair'])
+        else:
+            ci_qs = ci_qs.filter(status=status_filter)
+
+    if category_filter:
+        ci_qs = ci_qs.filter(category=category_filter)
+
+    if condition_filter:
+        ci_qs = ci_qs.filter(condition=condition_filter)
+
+    if search_query:
+        ci_qs = ci_qs.filter(
+            Q(ci_code__icontains=search_query) |
+            Q(name__icontains=search_query) |
+            Q(brand__icontains=search_query) |
+            Q(model_series__icontains=search_query) |
+            Q(serial_number__icontains=search_query) |
+            Q(specifications__icontains=search_query) |
+            Q(installed_on__unit_code__icontains=search_query) |
+            Q(assigned_to__name__icontains=search_query)
+        )
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=10 * mm,
+        rightMargin=10 * mm,
+        topMargin=10 * mm,
+        bottomMargin=10 * mm
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CITitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        leading=16,
+        textColor=HexColor('#002060'),
+        alignment=TA_LEFT
+    )
+    meta_style = ParagraphStyle(
+        'CIMeta',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8,
+        leading=10,
+        textColor=HexColor('#555555'),
+        alignment=TA_LEFT
+    )
+    cell_style = ParagraphStyle(
+        'CICell',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=7.5,
+        leading=9,
+        alignment=TA_LEFT
+    )
+    cell_center = ParagraphStyle(
+        'CICellCenter',
+        parent=cell_style,
+        alignment=TA_CENTER
+    )
+
+    elements = [
+        Paragraph("<b>LAPORAN CONFIGURATION ITEM (CI) - PT. KERINCI HYDROPOWER</b>", title_style),
+        Spacer(1, 2 * mm),
+        Paragraph(f"Dicetak pada: {datetime.now().strftime('%d %B %Y %H:%M')} WIB | Oleh: {request.user.get_full_name() or request.user.username} | Total: {ci_qs.count()} item", meta_style),
+        Spacer(1, 4 * mm)
+    ]
+
+    table_data = [
+        ["No", "Kode CI", "Nama Komponen", "Kategori", "Merek/Model", "S/N", "Status", "Kondisi", "Terpasang", "PIC"]
+    ]
+
+    for idx, ci in enumerate(ci_qs, 1):
+        installed = ci.installed_on.unit_code if ci.installed_on else "-"
+        pic = ci.assigned_to.name if ci.assigned_to else (ci.installed_on.assigned_to.name if ci.installed_on and ci.installed_on.assigned_to else "-")
+        table_data.append([
+            str(idx),
+            Paragraph(ci.ci_code, cell_center),
+            Paragraph(ci.name, cell_style),
+            Paragraph(ci.get_category_display(), cell_style),
+            Paragraph(f"{ci.brand or ''} {ci.model_series or ''}".strip() or "-", cell_style),
+            Paragraph(ci.serial_number or "-", cell_style),
+            Paragraph(ci.get_status_display(), cell_center),
+            Paragraph(ci.get_condition_display(), cell_center),
+            Paragraph(installed, cell_style),
+            Paragraph(pic, cell_style),
+        ])
+
+    col_widths = [10*mm, 28*mm, 45*mm, 26*mm, 35*mm, 30*mm, 25*mm, 23*mm, 28*mm, 27*mm]
+    t = Table(table_data, colWidths=col_widths, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#002060')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#DDDDDD')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [white, HexColor('#F9FAFB')]),
+    ]))
+
+    elements.append(t)
+    doc.build(elements)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = f"laporan_configuration_item_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response

@@ -11,6 +11,7 @@ from assets.views import (
     employee_list, employee_export_pdf, employee_detail, employee_detail_export_pdf,
     employee_create, employee_edit, employee_delete, employee_activate,
     ci_list, ci_detail, ci_create, ci_edit, ci_assign, ci_remove, ci_replace, ci_report_damage,
+    ci_export_excel, ci_export_pdf,
     asset_export_pdf, asset_export_excel, backup_database_view, asset_units_export_excel,
     unit_history_export_excel, status_aset_export_excel, distribusi_export_excel,
     employee_export_excel, employee_detail_export_excel,
@@ -72,6 +73,8 @@ urlpatterns = [
     path('karyawan/<int:emp_id>/activate/', employee_activate, name='employee_activate'),
     # Configuration Items (CI / CMDB)
     path('ci/', ci_list, name='ci_list'),
+    path('ci/export/', ci_export_pdf, name='ci_export_pdf'),
+    path('ci/export-excel/', ci_export_excel, name='ci_export_excel'),
     path('ci/create/', ci_create, name='ci_create'),
     path('ci/<int:ci_id>/', ci_detail, name='ci_detail'),
     path('ci/<int:ci_id>/edit/', ci_edit, name='ci_edit'),

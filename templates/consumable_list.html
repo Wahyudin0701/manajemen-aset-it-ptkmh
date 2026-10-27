@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Consumable Item & Persediaan IT{% endblock %}
+{% block page_title %}Consumable Item{% endblock %}
 
 {% block page_title_guide %}Panduan Modul Consumable Item{% endblock %}
 {% block page_guide_content %}
@@ -11,128 +11,81 @@
         <p class="text-xs text-emerald-700">Saldo stok tidak dapat diedit sembarangan. Setiap perubahan stok dicatat secara mutlak melalui transaksi atomik: <b>Barang Masuk</b>, <b>Barang Keluar</b>, atau <b>Stock Opname</b> pada buku besar transaksi (stock ledger).</p>
     </div>
     <ul class="list-disc pl-5 space-y-1 text-xs text-gray-600">
-        <li><b>Barang Masuk:</b> Mencatat penambahan stok dari pengadaan/pembelian, transfer, atau retur sisa teknisi.</li>
-        <li><b>Barang Keluar:</b> Mencatat konsumsi material oleh teknisi dengan keterkaitan ke tiket support, work order, atau unit aset terkait.</li>
+        <li><b>Barang Masuk:</b> Penambahan stok dari pengadaan/pembelian, transfer, atau retur sisa teknisi.</li>
+        <li><b>Barang Keluar:</b> Konsumsi material oleh teknisi dengan keterkaitan ke tiket support, work order, atau unit aset.</li>
         <li><b>Stock Opname:</b> Penyesuaian fisik berkala dengan alasan audit yang wajib diisi.</li>
     </ul>
 </div>
 {% endblock %}
 
 {% block content %}
-<!-- Top Header & Action Buttons -->
-<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
+<div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
     <div>
-        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset &bull; Logistik Habis Pakai</p>
+        <p class="text-xs font-bold text-kerinci uppercase tracking-widest mb-1">Manajemen Aset</p>
         <div class="flex items-center space-x-3">
             <h2 class="text-3xl font-extrabold text-gray-900">Consumable Item</h2>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Network & Support
-            </span>
-            <button onclick="openGuideModal()" class="text-gray-400 hover:text-kerinci p-1 rounded-lg hover:bg-gray-100 transition-colors" title="Buka Panduan Modul">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </button>
+            <button onclick="openGuideModal()" class="w-5 h-5 rounded-full bg-gray-200 text-gray-600 hover:bg-kerinci hover:text-white flex items-center justify-center text-xs font-extrabold transition-colors shadow-sm shrink-0" title="Panduan Halaman">!</button>
         </div>
-        <p class="text-xs text-gray-500 mt-1">Pengelolaan persediaan kabel, konektor RJ45, thermal paste, cable ties, fastener, dan perlengkapan teknisi IT.</p>
     </div>
 
-    <!-- Quick Action Buttons -->
-    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+    <!-- Header Actions -->
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <!-- Ekspor Dropdown -->
+        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
+            <button onclick="var d = document.getElementById('exportMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-kerinci text-kerinci rounded-xl px-4 py-2 text-sm font-bold hover:bg-kerinci/10 transition-colors flex items-center space-x-2 justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Ekspor Consumable</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div id="exportMenuConsumable" style="display: none;" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50">
+                <a href="{% url 'consumable_export_pdf' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" target="_blank" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-kerinci rounded-t-xl font-bold transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    Format PDF
+                </a>
+                <div class="h-px bg-gray-100 mx-2"></div>
+                <a href="{% url 'consumable_export_excel' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" class="flex items-center px-4 py-3 text-sm text-green-600 hover:bg-green-50 rounded-b-xl font-bold transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Format Excel (.xlsx)
+                </a>
+            </div>
+        </div>
+
         {% if not is_read_only %}
-        <button onclick="openModalBarangMasuk()" class="bg-blue-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center space-x-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <span>Barang Masuk</span>
-        </button>
-        <button onclick="openModalBarangKeluar()" class="bg-amber-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-amber-500/20 hover:bg-amber-700 transition-colors flex items-center space-x-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            <span>Barang Keluar</span>
-        </button>
-        <button onclick="openModalOpname()" class="bg-purple-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-purple-500/20 hover:bg-purple-700 transition-colors flex items-center space-x-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-            <span>Stock Opname</span>
-        </button>
-        <button onclick="openCreateItemModal()" class="bg-kerinci text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-kerinci/30 hover:bg-kerinci/90 transition-colors flex items-center space-x-1.5">
+        <!-- Transaksi Stok Dropdown -->
+        <div class="relative inline-block w-full sm:w-auto flex-1 sm:flex-none">
+            <button onclick="var d = document.getElementById('trxMenuConsumable'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" class="w-full border border-gray-300 bg-white text-gray-700 rounded-xl px-4 py-2 text-sm font-bold hover:bg-gray-50 transition-colors flex items-center space-x-2 justify-center shadow-sm">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <span>Transaksi Stok</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div id="trxMenuConsumable" style="display: none;" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 z-50 py-1">
+                <button onclick="document.getElementById('trxMenuConsumable').style.display='none'; openModalBarangMasuk();" class="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 font-bold transition-colors text-left">
+                    <svg class="w-4 h-4 mr-2.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Barang Masuk
+                </button>
+                <button onclick="document.getElementById('trxMenuConsumable').style.display='none'; openModalBarangKeluar();" class="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 font-bold transition-colors text-left">
+                    <svg class="w-4 h-4 mr-2.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Barang Keluar
+                </button>
+                <div class="h-px bg-gray-100 mx-2"></div>
+                <button onclick="document.getElementById('trxMenuConsumable').style.display='none'; openModalOpname();" class="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-bold transition-colors text-left">
+                    <svg class="w-4 h-4 mr-2.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Stock Opname
+                </button>
+            </div>
+        </div>
+
+        <!-- Tambah Item Button -->
+        <button onclick="openCreateItemModal()" class="bg-kerinci text-white border border-kerinci rounded-xl shadow-sm px-4 py-2 text-sm font-bold hover:bg-kerinci/90 transition-colors flex items-center space-x-2 justify-center w-full sm:w-auto flex-1 sm:flex-none">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            <span>+ Tambah Item</span>
+            <span>Tambah Item</span>
         </button>
         {% endif %}
-
-        <!-- Export Dropdown / Buttons -->
-        <div class="flex items-center space-x-1 pl-1">
-            <a href="{% url 'consumable_export_excel' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-emerald-700 transition-colors shadow-sm" title="Ekspor Excel">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </a>
-            <a href="{% url 'consumable_export_pdf' %}?q={{ search_query }}&category={{ category_filter }}&status={{ status_filter }}" target="_blank" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-red-600 transition-colors shadow-sm" title="Ekspor PDF">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-            </a>
-        </div>
     </div>
 </div>
 
-<!-- KPI Summary Cards -->
-<div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
-    <!-- Total Jenis Item -->
-    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-        <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Jenis</p>
-            <h3 class="text-2xl font-black text-gray-900">{{ counts.total }}</h3>
-            <p class="text-[10px] text-gray-400">Item Terdaftar</p>
-        </div>
-        <div class="w-10 h-10 bg-emerald-50 text-kerinci rounded-xl flex items-center justify-center font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-        </div>
-    </div>
-
-    <!-- Akumulasi Stok Fisik -->
-    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-        <div>
-            <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-0.5" title="Jumlah agregat kuantitas seluruh item">Akumulasi Stok</p>
-            <h3 class="text-2xl font-black text-blue-900">{{ counts.total_qty|floatformat:0 }}</h3>
-            <p class="text-[10px] text-blue-500" title="Agregat lintas satuan (pcs, meter, roll, dsb)">*Agregat kuantitas</p>
-        </div>
-        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-        </div>
-    </div>
-
-    <!-- Stok Tersedia Aman -->
-    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-        <div>
-            <p class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Stok Normal</p>
-            <h3 class="text-2xl font-black text-emerald-900">{{ counts.available }}</h3>
-            <p class="text-[10px] text-emerald-500">Di atas batas min</p>
-        </div>
-        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-    </div>
-
-    <!-- Stok Menipis -->
-    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-        <div>
-            <p class="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Stok Menipis</p>
-            <h3 class="text-2xl font-black text-amber-900">{{ counts.low_stock }}</h3>
-            <p class="text-[10px] text-amber-500">Perlu reorder</p>
-        </div>
-        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        </div>
-    </div>
-
-    <!-- Stok Habis -->
-    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between col-span-2 lg:col-span-1">
-        <div>
-            <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-0.5">Stok Habis</p>
-            <h3 class="text-2xl font-black text-red-900">{{ counts.out_of_stock }}</h3>
-            <p class="text-[10px] text-red-500">Saldo 0</p>
-        </div>
-        <div class="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center font-bold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-        </div>
-    </div>
-</div>
-
-<!-- Status Tabs -->
-<div class="flex space-x-2 mb-4 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
+<!-- Category Tabs -->
+<div class="flex space-x-2 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
     <a href="?status={% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if not status_filter %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
         Semua Item
         <span class="ml-2 {% if not status_filter %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.total }}</span>
@@ -141,161 +94,118 @@
         Stok Aman
         <span class="ml-2 {% if status_filter == 'available' %}bg-kerinci/10 text-kerinci{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.available }}</span>
     </a>
-    <a href="?status=low_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'low_stock' %}border-amber-600 text-amber-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+    <a href="?status=low_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'low_stock' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
         Stok Menipis
         <span class="ml-2 {% if status_filter == 'low_stock' %}bg-amber-100 text-amber-700{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.low_stock }}</span>
     </a>
-    <a href="?status=out_of_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'out_of_stock' %}border-red-600 text-red-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+    <a href="?status=out_of_stock{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors flex items-center {% if status_filter == 'out_of_stock' %}border-kerinci text-kerinci{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
         Stok Habis
         <span class="ml-2 {% if status_filter == 'out_of_stock' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] px-2 py-0.5 rounded-full font-extrabold">{{ counts.out_of_stock }}</span>
     </a>
 </div>
 
-<!-- Filters & Search Bar -->
-<div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
-    <form id="filterForm" method="GET" class="flex flex-wrap items-center gap-2 w-full">
+<!-- Filters & Search -->
+<div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+    <form id="searchForm" method="GET" class="relative w-full sm:w-96">
         <input type="hidden" name="status" value="{{ status_filter }}">
-        <div class="relative flex-1 min-w-[240px]">
-            <input type="text" name="q" value="{{ search_query }}" placeholder="Cari kode barang, nama, merek, spesifikasi, lokasi..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
-            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        </div>
+        {% if category_filter %}<input type="hidden" name="category" value="{{ category_filter }}">{% endif %}
+        {% if location_filter %}<input type="hidden" name="location" value="{{ location_filter }}">{% endif %}
+        <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="Cari kode barang, nama, merek, atau spesifikasi..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white shadow-sm placeholder-gray-400">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </form>
 
-        <select name="category" onchange="this.form.submit()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
-            <option value="">Semua Kategori</option>
+    <div class="flex items-center space-x-2 w-full sm:w-auto">
+        <select onchange="location = this.value;" class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
+            <option value="?status={{ status_filter }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}">Semua Kategori</option>
             {% for cat_val, cat_label in categories %}
-            <option value="{{ cat_val }}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+            <option value="?status={{ status_filter }}&category={{ cat_val }}&q={{ search_query }}{% if location_filter %}&location={{ location_filter }}{% endif %}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
             {% endfor %}
         </select>
 
-        <select name="location" onchange="this.form.submit()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
-            <option value="">Semua Lokasi</option>
+        <select onchange="location = this.value;" class="px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold focus:outline-none focus:border-kerinci focus:ring-1 focus:ring-kerinci bg-white text-gray-700 shadow-sm">
+            <option value="?status={{ status_filter }}&category={{ category_filter }}&q={{ search_query }}">Semua Lokasi</option>
             {% for loc in locations %}
-            <option value="{{ loc }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
+            <option value="?status={{ status_filter }}&category={{ category_filter }}&location={{ loc }}&q={{ search_query }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
             {% endfor %}
         </select>
 
         {% if search_query or category_filter or location_filter or status_filter %}
-        <a href="{% url 'consumable_list' %}" class="px-3.5 py-2.5 text-xs font-bold text-gray-500 hover:text-red-500 border border-gray-200 hover:border-red-200 rounded-xl bg-white transition-colors" title="Reset Semua Filter">
+        <a href="{% url 'consumable_list' %}" class="px-3 py-2 text-xs font-bold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-xl bg-white transition-colors shadow-sm" title="Reset Filter">
             Reset
         </a>
         {% endif %}
-    </form>
+    </div>
 </div>
 
-<!-- Consumable Item Table Card -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+<!-- Main Data Table -->
+<div class="bg-white rounded-none sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full" id="tableContainer">
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[900px]">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="bg-gray-50/75 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                    <th class="py-3.5 px-4">Kode Item</th>
-                    <th class="py-3.5 px-4">Nama Barang & Merek</th>
-                    <th class="py-3.5 px-4">Kategori</th>
-                    <th class="py-3.5 px-4">Spesifikasi</th>
-                    <th class="py-3.5 px-4 text-center">Satuan</th>
-                    <th class="py-3.5 px-4 text-right">Stok Tersedia</th>
-                    <th class="py-3.5 px-4 text-right">Stok Min</th>
-                    <th class="py-3.5 px-4">Lokasi</th>
-                    <th class="py-3.5 px-4 text-center">Status</th>
-                    <th class="py-3.5 px-4 text-center">Aksi</th>
+                <tr class="bg-[#002060] text-white text-[11px] uppercase tracking-widest">
+                    <th class="p-4 font-bold text-center w-16">No</th>
+                    <th class="p-4 font-bold w-36">Kode Item</th>
+                    <th class="p-4 font-bold min-w-[200px]">Nama Barang & Merek</th>
+                    <th class="p-4 font-bold">Kategori</th>
+                    <th class="p-4 font-bold min-w-[160px]">Spesifikasi</th>
+                    <th class="p-4 font-bold text-center">Satuan</th>
+                    <th class="p-4 font-bold text-center">Stok</th>
+                    <th class="p-4 font-bold">Lokasi</th>
+                    <th class="p-4 font-bold text-center">Status</th>
+                    <th class="p-4 font-bold text-center w-28">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-sm">
+            <tbody class="text-sm divide-y divide-gray-200">
                 {% for item in page_obj %}
-                <tr class="hover:bg-gray-50/80 transition-colors">
-                    <!-- Kode Item -->
-                    <td class="py-3.5 px-4 whitespace-nowrap">
-                        <a href="{% url 'consumable_detail' item.id %}" class="font-mono text-xs font-bold text-kerinci hover:underline">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-center text-gray-500">{{ forloop.counter }}</td>
+                    <td class="p-4 font-bold text-gray-700 font-mono text-xs">
+                        <a href="{% url 'consumable_detail' item.id %}" class="hover:text-kerinci transition-colors">
                             {{ item.item_code }}
                         </a>
                     </td>
-
-                    <!-- Nama Barang & Merek -->
-                    <td class="py-3.5 px-4">
-                        <div class="font-bold text-gray-900 leading-snug">
-                            <a href="{% url 'consumable_detail' item.id %}" class="hover:text-kerinci">
-                                {{ item.name }}
-                            </a>
-                        </div>
+                    <td class="p-4">
+                        <a href="{% url 'consumable_detail' item.id %}" class="font-bold text-gray-900 hover:text-kerinci transition-colors block">
+                            {{ item.name }}
+                        </a>
                         {% if item.brand %}
-                        <div class="text-[11px] text-gray-400 font-medium">Merek: {{ item.brand }}</div>
+                        <p class="text-xs text-gray-500 font-normal mt-0.5">Merek: {{ item.brand }}</p>
                         {% endif %}
                     </td>
-
-                    <!-- Kategori -->
-                    <td class="py-3.5 px-4 whitespace-nowrap">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
-                            {{ item.get_category_display|truncatewords:2 }}
-                        </span>
+                    <td class="p-4 text-gray-600 font-medium text-xs">
+                        {{ item.get_category_display }}
                     </td>
-
-                    <!-- Spesifikasi -->
-                    <td class="py-3.5 px-4 text-xs text-gray-600 max-w-[220px]">
+                    <td class="p-4 text-xs text-gray-500 max-w-[220px]">
                         <span class="line-clamp-2" title="{{ item.specification }}">{{ item.specification|default:"-" }}</span>
                     </td>
-
-                    <!-- Satuan & Konversi -->
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                        <span class="font-semibold text-gray-700 text-xs">{{ item.base_unit }}</span>
-                        {% if item.purchase_unit %}
-                        <div class="text-[10px] text-gray-400" title="1 {{ item.purchase_unit }} = {{ item.conversion_rate }} {{ item.base_unit }}">
-                            1 {{ item.purchase_unit }} = {{ item.conversion_rate|floatformat:0 }} {{ item.base_unit }}
-                        </div>
-                        {% endif %}
+                    <td class="p-4 text-center text-gray-700 font-semibold text-xs">
+                        {{ item.base_unit }}
                     </td>
-
-                    <!-- Stok Tersedia -->
-                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                        <span class="text-base font-extrabold {% if item.stock_status == 'out_of_stock' %}text-red-600{% elif item.stock_status == 'low_stock' %}text-amber-600{% else %}text-emerald-700{% endif %}">
-                            {{ item.formatted_stock }}
-                        </span>
+                    <td class="p-4 text-center">
+                        <span class="font-extrabold {% if item.stock_status == 'out_of_stock' %}text-red-600{% elif item.stock_status == 'low_stock' %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ item.formatted_stock }}</span>
+                        <span class="text-gray-300 mx-1">/</span>
+                        <span class="text-gray-400 text-xs" title="Batas Minimum Stok">{{ item.minimum_stock|floatformat:0 }}</span>
                     </td>
-
-                    <!-- Stok Minimum -->
-                    <td class="py-3.5 px-4 text-right whitespace-nowrap text-xs text-gray-500 font-medium">
-                        {{ item.formatted_minimum_stock }}
+                    <td class="p-4 text-gray-600 text-xs font-medium">
+                        {{ item.location }}
                     </td>
-
-                    <!-- Lokasi -->
-                    <td class="py-3.5 px-4 whitespace-nowrap text-xs text-gray-600">
-                        <span class="inline-flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                            {{ item.location }}
-                        </span>
-                    </td>
-
-                    <!-- Status Stok Badge -->
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td class="p-4 text-center">
                         {% if item.stock_status == 'out_of_stock' %}
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
-                            Habis
-                        </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">Habis</span>
                         {% elif item.stock_status == 'low_stock' %}
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
-                            Menipis
-                        </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Menipis</span>
                         {% else %}
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                            Tersedia
-                        </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Aman</span>
                         {% endif %}
                     </td>
-
-                    <!-- Aksi -->
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td class="p-4 text-center">
                         <div class="flex items-center justify-center space-x-1.5">
-                            <a href="{% url 'consumable_detail' item.id %}" class="p-1.5 text-gray-500 hover:text-kerinci hover:bg-gray-100 rounded-lg transition-colors" title="Buku Besar & Riwayat Lengkap">
+                            <a href="{% url 'consumable_detail' item.id %}" class="p-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200" title="Buku Besar & Detail">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             </a>
                             {% if not is_read_only %}
-                            <button onclick="openModalBarangMasukItem('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.base_unit }}', '{{ item.purchase_unit|default:'' }}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" title="Tambah Stok (Barang Masuk)">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            </button>
-                            <button onclick="openModalBarangKeluarItem('{{ item.id }}', '{{ item.name|escapejs }}', '{{ item.base_unit }}', '{{ item.stock_available }}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors" title="Gunakan / Keluarkan Barang">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                            <button onclick="openEditModal('{{ item.id }}', '{{ item.item_code }}', '{{ item.name|escapejs }}', '{{ item.category }}', '{{ item.brand|default:''|escapejs }}', '{{ item.specification|default:''|escapejs }}', '{{ item.base_unit|escapejs }}', '{{ item.purchase_unit|default:''|escapejs }}', '{{ item.conversion_rate|default:1 }}', '{{ item.minimum_stock|default:0 }}', '{{ item.unit_price|default:0 }}', '{{ item.location|escapejs }}')" class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100" title="Edit Item">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
                             {% endif %}
                         </div>
@@ -303,32 +213,17 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="10" class="py-12 text-center text-gray-500">
-                        <div class="flex flex-col items-center justify-center">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-3">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                            </div>
-                            <h4 class="text-base font-bold text-gray-800">Tidak ada consumable item ditemukan</h4>
-                            <p class="text-xs text-gray-400 mt-1 max-w-sm">
-                                {% if search_query or category_filter or location_filter or status_filter %}
-                                Tidak ada data yang cocok dengan kriteria pencarian atau filter yang diterapkan.
-                                {% else %}
-                                Belum ada data barang habis pakai. Klik tombol "+ Tambah Item" di atas untuk mendaftarkan barang baru.
-                                {% endif %}
-                            </p>
-                        </div>
+                    <td colspan="10" class="p-8 text-center text-gray-400 text-sm">
+                        Belum ada data Consumable Item untuk kategori ini.
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <!-- Paginasi -->
     {% include 'components/pagination.html' %}
 </div>
 
-<!-- ========================================================================= -->
 <!-- MODAL 1: Tambah Consumable Item Baru -->
 <!-- ========================================================================= -->
 <div id="modalCreateItem" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -901,5 +796,17 @@
             diffDisplay.className = 'text-lg font-black text-gray-500';
         }
     }
+
+    // Close dropdowns when clicking outside
+    window.addEventListener('click', function(e) {
+        const exportMenu = document.getElementById('exportMenuConsumable');
+        if (exportMenu && !e.target.closest('#exportMenuConsumable') && !e.target.closest('button')) {
+            exportMenu.style.display = 'none';
+        }
+        const trxMenu = document.getElementById('trxMenuConsumable');
+        if (trxMenu && !e.target.closest('#trxMenuConsumable') && !e.target.closest('button')) {
+            trxMenu.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}

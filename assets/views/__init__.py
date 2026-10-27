@@ -66,6 +66,8 @@ from .ci_views import (
     ci_remove,
     ci_replace,
     ci_report_damage,
+    ci_export_excel,
+    ci_export_pdf,
 )
 
 # Consumable Item (Barang Habis Pakai)
@@ -159,6 +161,8 @@ __all__ = [
     'ci_remove',
     'ci_replace',
     'ci_report_damage',
+    'ci_export_excel',
+    'ci_export_pdf',
     # Consumable Items
     'consumable_list',
     'consumable_detail',
